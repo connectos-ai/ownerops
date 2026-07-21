@@ -12,11 +12,12 @@ The current public candidate implements:
 - `POST /slack/commands` with Slack request signature verification.
 - Message shortcut handling for `ownerops_turn_message_into_task`.
 - Slash command task creation with `/ownerops task <task title>`.
+- Modal submission task creation with `view.callback_id: "ownerops_task_create"`.
 - Block Kit action handling for `ownerops_task_status`.
 - Idempotency for retried Slack actions.
 - Optional Slack team-to-OwnerOps workspace scoping using `workspace.policies.slackTeamId`.
 
-The current slice does not yet implement Slack OAuth, token storage, App Home, modals, or outgoing Slack API calls.
+The current slice does not yet implement Slack OAuth, token storage, App Home, opening modals through Slack Web API, or outgoing Slack API calls.
 
 ## Request Verification
 
@@ -83,6 +84,28 @@ OwnerOps creates a canonical task with:
 Duplicate protection uses both the Slack action idempotency key and the canonical task source reference.
 
 Reference: https://docs.slack.dev/reference/interaction-payloads/shortcuts-interaction-payload
+
+## Modal Task Submission
+
+The implemented modal submission handler listens for `view_submission` payloads with `view.callback_id: "ownerops_task_create"`.
+
+OwnerOps reads submitted values from `view.state.values`. It looks for block IDs or action IDs containing:
+
+- `title` for the required task title.
+- `description` for optional details.
+- `dueDate` for an optional Slack date picker value.
+- `priority` for an optional selected option value such as `HIGH`.
+
+OwnerOps creates canonical task data with:
+
+- `sourceType: "slack_modal"`
+- `sourceReference` built from Slack team, view ID, and view hash.
+- `createdBy` and `requestedBy` set to the submitting Slack user.
+- `dueAt` normalized by the core task model.
+
+The response uses `response_action: "clear"` after a successful or duplicate submission so Slack can close the modal. Validation errors can return Slack modal error responses in a later slice.
+
+Reference: https://docs.slack.dev/reference/interaction-payloads/view-interactions-payload/
 
 ## Status Action
 

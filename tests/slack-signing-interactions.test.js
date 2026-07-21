@@ -181,6 +181,81 @@ test('slack slash command creates a canonical task from command text', async () 
   }
 });
 
+test('slack modal submission creates canonical task from submitted fields', async () => {
+  const app = createOwnerOpsServer({ slackSigningSecret: signingSecret });
+  const server = app.listen(0);
+  await onceListening(server);
+  const baseUrl = `http://127.0.0.1:${server.address().port}`;
+
+  try {
+    await requestJson(baseUrl, 'POST', '/api/workspaces', {
+      id: 'workspace_demo',
+      name: 'Demo Team',
+      policies: { slackTeamId: 'T_DEMO' }
+    });
+
+    const payload = {
+      type: 'view_submission',
+      team: { id: 'T_DEMO' },
+      user: { id: 'U_DEMO' },
+      view: {
+        id: 'V_DEMO',
+        hash: 'view_hash_demo',
+        callback_id: 'ownerops_task_create',
+        state: {
+          values: {
+            title_block: {
+              title_action: {
+                type: 'plain_text_input',
+                value: 'Call vendor about invoice'
+              }
+            },
+            description_block: {
+              description_action: {
+                type: 'plain_text_input',
+                value: 'Need a clear answer before close of business.'
+              }
+            },
+            due_date_block: {
+              due_date_action: {
+                type: 'datepicker',
+                selected_date: '2026-08-01'
+              }
+            },
+            priority_block: {
+              priority_action: {
+                type: 'static_select',
+                selected_option: {
+                  value: 'HIGH'
+                }
+              }
+            }
+          }
+        }
+      }
+    };
+    const body = new URLSearchParams({ payload: JSON.stringify(payload) }).toString();
+
+    const first = await signedRequest(baseUrl, '/slack/interactions', body, 'application/x-www-form-urlencoded');
+    const second = await signedRequest(baseUrl, '/slack/interactions', body, 'application/x-www-form-urlencoded');
+    const tasks = await requestJson(baseUrl, 'GET', '/api/tasks?workspaceId=workspace_demo&query=vendor');
+
+    assert.equal(first.response_action, 'clear');
+    assert.equal(first.text, 'OwnerOps created task_from_slack_modal_VDEMO.');
+    assert.equal(second.text, 'OwnerOps already handled Slack modal.');
+    assert.equal(tasks.tasks.length, 1);
+    assert.equal(tasks.tasks[0].sourceType, 'slack_modal');
+    assert.equal(tasks.tasks[0].sourceReference, 'T_DEMO:V_DEMO:view_hash_demo');
+    assert.equal(tasks.tasks[0].title, 'Call vendor about invoice');
+    assert.equal(tasks.tasks[0].description, 'Need a clear answer before close of business.');
+    assert.equal(tasks.tasks[0].dueAt, '2026-08-01T00:00:00.000Z');
+    assert.equal(tasks.tasks[0].priority, 'HIGH');
+    assert.equal(tasks.tasks[0].createdBy, 'slack:U_DEMO');
+  } finally {
+    await closeServer(server);
+  }
+});
+
 test('slack slash command rejects unmapped teams', async () => {
   const app = createOwnerOpsServer({ slackSigningSecret: signingSecret });
   const server = app.listen(0);

@@ -49,6 +49,10 @@ export function handleSlackInteraction(payload, store) {
     return handleSlackMessageAction(payload, store);
   }
 
+  if (payload?.type === 'view_submission') {
+    return handleSlackViewSubmission(payload, store);
+  }
+
   if (payload?.type !== 'block_actions') {
     throw validationError('SLACK_INTERACTION_UNSUPPORTED', 'Unsupported Slack interaction type.');
   }
@@ -170,6 +174,48 @@ export function handleSlackMessageAction(payload, store) {
   };
 }
 
+export function handleSlackViewSubmission(payload, store) {
+  const callbackId = cleanRequired(payload.view?.callback_id, 'view.callback_id');
+  if (callbackId !== 'ownerops_task_create') {
+    throw validationError('SLACK_VIEW_UNSUPPORTED', 'Unsupported Slack view submission.');
+  }
+
+  const workspace = findWorkspaceBySlackTeam(store, payload.team?.id);
+  authorizeSlackWorkspace(payload, workspace);
+
+  const sourceReference = slackViewSourceReference(payload);
+  const idempotencyKey = [
+    payload.team?.id || 'unknown_team',
+    payload.user?.id || 'unknown_user',
+    callbackId,
+    sourceReference
+  ].join(':');
+
+  if (store.hasProcessedSlackAction(idempotencyKey)) {
+    return {
+      response_action: 'clear',
+      text: 'OwnerOps already handled Slack modal.'
+    };
+  }
+
+  const existing = store.findTaskBySource(workspace.id, 'slack_modal', sourceReference);
+  if (existing) {
+    store.markProcessedSlackAction(idempotencyKey);
+    return {
+      response_action: 'clear',
+      text: `OwnerOps already ${existing.id} for Slack modal.`
+    };
+  }
+
+  const task = store.createTask(slackViewSubmissionToTask(payload, workspace.id, sourceReference));
+  store.markProcessedSlackAction(idempotencyKey);
+
+  return {
+    response_action: 'clear',
+    text: `OwnerOps created ${task.id}.`
+  };
+}
+
 export function slackActionIdempotencyKey(payload, action, value) {
   return [
     payload.team?.id || 'unknown_team',
@@ -242,6 +288,33 @@ function slackMessageToTask(payload, workspaceId, sourceReference) {
   };
 }
 
+function slackViewSubmissionToTask(payload, workspaceId, sourceReference) {
+  const values = payload.view?.state?.values || {};
+  const title = firstLine(cleanRequired(slackInputValue(values, 'title'), 'title'));
+  const description = slackInputValue(values, 'description') || '';
+  const dueAt = slackInputValue(values, 'dueDate');
+  const priority = slackInputValue(values, 'priority') || inferPriority(`${title} ${description}`);
+  const viewId = cleanRequired(payload.view?.id, 'view.id');
+
+  return {
+    id: `task_from_slack_modal_${sanitizeIdPart(viewId)}`,
+    workspaceId,
+    title,
+    description,
+    desiredOutcome: `Requested outcome: ${title}`,
+    sourceType: 'slack_modal',
+    sourceReference,
+    sourceUrl: '',
+    createdBy: `slack:${payload.user?.id || 'unknown'}`,
+    ownerId: 'unassigned',
+    requestedBy: `slack:${payload.user?.id || 'unknown'}`,
+    status: TaskStatus.INBOX,
+    priority,
+    dueAt,
+    tags: ['slack']
+  };
+}
+
 function parseOwnerOpsCommandText(text) {
   const trimmed = cleanRequired(text, 'text');
   const taskMatch = trimmed.match(/^task\s+(.+)$/i);
@@ -258,6 +331,43 @@ function slackMessageSourceReference(payload) {
     cleanRequired(payload.channel?.id, 'channel.id'),
     cleanRequired(payload.message?.ts, 'message.ts')
   ].join(':');
+}
+
+function slackViewSourceReference(payload) {
+  return [
+    cleanRequired(payload.team?.id, 'team.id'),
+    cleanRequired(payload.view?.id, 'view.id'),
+    payload.view?.hash || payload.view?.root_view_id || 'submitted'
+  ].join(':');
+}
+
+function slackInputValue(values, fieldName) {
+  const normalizedFieldName = normalizeFieldName(fieldName);
+  for (const [blockId, actions] of Object.entries(values)) {
+    for (const [actionId, input] of Object.entries(actions || {})) {
+      const normalizedBlockId = normalizeFieldName(blockId);
+      const normalizedActionId = normalizeFieldName(actionId);
+      if (!normalizedBlockId.includes(normalizedFieldName) && !normalizedActionId.includes(normalizedFieldName)) {
+        continue;
+      }
+      return extractSlackInputValue(input);
+    }
+  }
+  return '';
+}
+
+function extractSlackInputValue(input) {
+  if (!input) return '';
+  if (typeof input.value === 'string') return input.value.trim();
+  if (typeof input.selected_date === 'string') return input.selected_date.trim();
+  if (typeof input.selected_time === 'string') return input.selected_time.trim();
+  if (typeof input.selected_option?.value === 'string') return input.selected_option.value.trim();
+  if (typeof input.selected_option?.text?.text === 'string') return input.selected_option.text.text.trim();
+  return '';
+}
+
+function normalizeFieldName(value) {
+  return String(value || '').replace(/[^A-Za-z0-9]+/g, '').toLowerCase();
 }
 
 function inferPriority(text) {
