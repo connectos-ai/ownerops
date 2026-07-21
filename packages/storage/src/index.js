@@ -36,6 +36,9 @@ export class InMemoryOwnerOpsStore {
   }
 
   createWorkspace(input) {
+    if (input?.id && this.workspaces.has(input.id)) {
+      return this.workspaces.get(input.id);
+    }
     const workspace = createWorkspace(input);
     this.workspaces.set(workspace.id, workspace);
     this.persist();
@@ -44,6 +47,8 @@ export class InMemoryOwnerOpsStore {
 
   addWorkspaceUser(workspaceId, input) {
     const workspace = this.requireWorkspace(workspaceId);
+    const existing = workspace.users.find((user) => user.id === input?.id);
+    if (existing) return existing;
     const user = addWorkspaceUser(workspace, input);
     this.persist();
     return user;
@@ -51,6 +56,8 @@ export class InMemoryOwnerOpsStore {
 
   createProject(workspaceId, input) {
     const workspace = this.requireWorkspace(workspaceId);
+    const existing = workspace.projects.find((project) => project.id === input?.id);
+    if (existing) return existing;
     const project = createProject(workspace, input);
     this.persist();
     return project;
@@ -58,6 +65,8 @@ export class InMemoryOwnerOpsStore {
 
   createTaskList(workspaceId, input) {
     const workspace = this.requireWorkspace(workspaceId);
+    const existing = workspace.lists.find((list) => list.id === input?.id);
+    if (existing) return existing;
     const list = createTaskList(workspace, input);
     this.persist();
     return list;

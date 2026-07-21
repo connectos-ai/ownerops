@@ -1,4 +1,6 @@
-const workspaceId = 'workspace_demo';
+const workspaceStorageKey = 'ownerops.workspaceId';
+const knownWorkspacesKey = 'ownerops.knownWorkspaces';
+const defaultWorkspace = { id: 'workspace_local', name: 'My Workspace' };
 const defaultUsers = [
   { id: 'user_owner', displayName: 'Owner' },
   { id: 'user_ops', displayName: 'Ops Lead' }
@@ -13,39 +15,113 @@ const columns = [
   ['DONE', 'Done']
 ];
 
+let workspace = null;
 let tasks = [];
 let activeFilter = 'all';
 
 const board = document.querySelector('#board-columns');
-const form = document.querySelector('#task-form');
+const taskForm = document.querySelector('#task-form');
+const workspaceForm = document.querySelector('#workspace-form');
+const memberForm = document.querySelector('#member-form');
+const projectForm = document.querySelector('#project-form');
+const listForm = document.querySelector('#list-form');
 const template = document.querySelector('#task-card-template');
 const searchInput = document.querySelector('#task-search');
+const ownerSelect = document.querySelector('#task-owner');
+const projectSelect = document.querySelector('#task-project');
+const listSelect = document.querySelector('#task-list');
+const workspaceSelect = document.querySelector('#workspace-select');
 
-await ensureDemoWorkspace();
+await loadWorkspace();
 await refreshTasks();
 
-form.addEventListener('submit', async (event) => {
+workspaceForm.addEventListener('submit', async (event) => {
   event.preventDefault();
-  const formData = new FormData(form);
+  const formData = new FormData(workspaceForm);
+  const name = String(formData.get('name') || '').trim();
+  if (!name) return;
+  const id = slugId('workspace', name);
+  workspace = await api('/api/workspaces', { method: 'POST', body: { id, name } });
+  await api(`/api/workspaces/${workspace.id}/users`, {
+    method: 'POST',
+    body: { id: 'user_owner', displayName: 'Owner' }
+  });
+  rememberWorkspace(workspace);
+  workspaceForm.reset();
+  await loadWorkspaceById(workspace.id);
+});
+
+memberForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const formData = new FormData(memberForm);
+  const displayName = String(formData.get('displayName') || '').trim();
+  if (!displayName) return;
+  await api(`/api/workspaces/${workspace.id}/users`, {
+    method: 'POST',
+    body: { id: slugId('user', displayName), displayName }
+  });
+  memberForm.reset();
+  await loadWorkspaceById(workspace.id);
+});
+
+projectForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const formData = new FormData(projectForm);
+  const name = String(formData.get('name') || '').trim();
+  if (!name) return;
+  await api(`/api/workspaces/${workspace.id}/projects`, {
+    method: 'POST',
+    body: { id: slugId('project', name), name }
+  });
+  projectForm.reset();
+  await loadWorkspaceById(workspace.id);
+});
+
+listForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const formData = new FormData(listForm);
+  const name = String(formData.get('name') || '').trim();
+  if (!name) return;
+  await api(`/api/workspaces/${workspace.id}/lists`, {
+    method: 'POST',
+    body: {
+      id: slugId('list', name),
+      name,
+      projectId: projectSelect.value || undefined
+    }
+  });
+  listForm.reset();
+  await loadWorkspaceById(workspace.id);
+});
+
+taskForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const formData = new FormData(taskForm);
   const title = String(formData.get('title') || '').trim();
   if (!title) return;
 
   await createTask({
     id: `task_${Date.now().toString(36)}`,
-    workspaceId,
+    workspaceId: workspace.id,
     title,
     description: String(formData.get('description') || '').trim(),
     createdBy: 'user_owner',
     ownerId: String(formData.get('ownerId') || 'unassigned'),
     priority: String(formData.get('priority') || 'NORMAL'),
+    projectId: String(formData.get('projectId') || '') || undefined,
+    listId: String(formData.get('listId') || '') || undefined,
     dueAt: dateToTimestamp(formData.get('dueAt'))
   });
 
-  form.reset();
+  taskForm.reset();
+  renderWorkspace();
   await refreshTasks();
 });
 
-document.querySelector('[data-refresh]').addEventListener('click', refreshTasks);
+document.querySelector('[data-refresh]').addEventListener('click', async () => {
+  await loadWorkspaceById(workspace.id);
+  await refreshTasks();
+});
 
 document.querySelectorAll('[data-filter]').forEach((button) => {
   button.addEventListener('click', () => {
@@ -56,23 +132,55 @@ document.querySelectorAll('[data-filter]').forEach((button) => {
 });
 
 searchInput.addEventListener('input', render);
+workspaceSelect.addEventListener('change', async () => {
+  await loadWorkspaceById(workspaceSelect.value);
+  await refreshTasks();
+});
 
-async function ensureDemoWorkspace() {
-  await ignoreConflict(api('/api/workspaces', {
-    method: 'POST',
-    body: { id: workspaceId, name: 'Demo Team' }
-  }));
-
-  for (const user of defaultUsers) {
-    await ignoreConflict(api(`/api/workspaces/${workspaceId}/users`, {
-      method: 'POST',
-      body: user
-    }));
+async function loadWorkspace() {
+  const savedId = localStorage.getItem(workspaceStorageKey) || defaultWorkspace.id;
+  const savedWorkspace = readKnownWorkspaces().find((item) => item.id === savedId) || defaultWorkspace;
+  workspace = await api('/api/workspaces', { method: 'POST', body: savedWorkspace });
+  rememberWorkspace(workspace);
+  if (workspace.users.length === 0) {
+    for (const user of defaultUsers) {
+      await api(`/api/workspaces/${workspace.id}/users`, { method: 'POST', body: user });
+    }
   }
+  await loadWorkspaceById(workspace.id);
+}
+
+async function loadWorkspaceById(workspaceId) {
+  const knownWorkspace = readKnownWorkspaces().find((item) => item.id === workspaceId);
+  workspace = knownWorkspace
+    ? await api('/api/workspaces', { method: 'POST', body: knownWorkspace })
+    : await api(`/api/workspaces/${workspaceId}`);
+  rememberWorkspace(workspace);
+  renderWorkspace();
+}
+
+function renderWorkspace() {
+  document.querySelector('#workspace-current').textContent = workspace.name;
+  document.querySelector('#workspace-counts').textContent =
+    `${workspace.users.length} members · ${workspace.projects.length} projects · ${workspace.lists.length} lists`;
+  renderSelect(workspaceSelect, readKnownWorkspaces().map((item) => [item.id, item.name]));
+  workspaceSelect.value = workspace.id;
+  renderSelect(ownerSelect, [
+    ['unassigned', 'Unassigned'],
+    ...workspace.users.map((user) => [user.id, user.displayName])
+  ]);
+  renderSelect(projectSelect, [
+    ['', 'No project'],
+    ...workspace.projects.map((project) => [project.id, project.name])
+  ]);
+  renderSelect(listSelect, [
+    ['', 'No list'],
+    ...workspace.lists.map((list) => [list.id, list.name])
+  ]);
 }
 
 async function refreshTasks() {
-  const response = await api(`/api/boards/kanban?workspaceId=${workspaceId}`);
+  const response = await api(`/api/boards/kanban?workspaceId=${workspace.id}`);
   tasks = columns.flatMap(([status]) => response[status] || []);
   render();
 }
@@ -85,7 +193,7 @@ async function updateStatus(task, status) {
   await api(`/api/tasks/${task.id}/status`, {
     method: 'PATCH',
     body: {
-      workspaceId,
+      workspaceId: workspace.id,
       status,
       actorId: 'user_owner',
       waitingOn: status === 'WAITING' ? task.waitingOn || 'Waiting on reply' : undefined,
@@ -137,7 +245,7 @@ function renderTaskCard(task) {
   card.querySelector('h3').textContent = task.title;
   card.querySelector('.priority').textContent = task.priority;
   card.querySelector('.task-description').textContent = task.description || task.desiredOutcome || 'No next action yet.';
-  card.querySelector('.task-owner').textContent = task.ownerId || 'unassigned';
+  card.querySelector('.task-owner').textContent = displayName(task.ownerId);
   card.querySelector('.task-due').textContent = formatDate(task.dueAt);
   card.querySelectorAll('[data-action]').forEach((button) => {
     const status = button.dataset.action;
@@ -155,7 +263,7 @@ function filterTasks(items) {
     if (activeFilter === 'blocked' && task.status !== 'BLOCKED') return false;
     if (activeFilter === 'owner' && task.status !== 'NEEDS_OWNER') return false;
     if (!query) return true;
-    return [task.title, task.description, task.ownerId, task.priority, ...(task.tags || [])]
+    return [task.title, task.description, task.ownerId, displayName(task.ownerId), task.priority, task.projectId, task.listId, ...(task.tags || [])]
       .filter(Boolean)
       .some((value) => String(value).toLowerCase().includes(query));
   });
@@ -181,13 +289,45 @@ async function api(path, options = {}) {
   return data;
 }
 
-async function ignoreConflict(promise) {
-  try {
-    return await promise;
-  } catch (error) {
-    if (!/already exists|duplicate/i.test(error.message)) throw error;
-    return null;
+function renderSelect(select, options) {
+  const current = select.value;
+  select.replaceChildren(...options.map(([value, label]) => {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = label;
+    return option;
+  }));
+  if (options.some(([value]) => value === current)) {
+    select.value = current;
   }
+}
+
+function rememberWorkspace(nextWorkspace) {
+  localStorage.setItem(workspaceStorageKey, nextWorkspace.id);
+  const known = new Map(readKnownWorkspaces().map((item) => [item.id, item]));
+  known.set(nextWorkspace.id, { id: nextWorkspace.id, name: nextWorkspace.name });
+  localStorage.setItem(knownWorkspacesKey, JSON.stringify([...known.values()]));
+}
+
+function readKnownWorkspaces() {
+  try {
+    return JSON.parse(localStorage.getItem(knownWorkspacesKey) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function displayName(userId) {
+  return workspace.users.find((user) => user.id === userId)?.displayName || userId || 'unassigned';
+}
+
+function slugId(prefix, value) {
+  const slug = String(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 48);
+  return `${prefix}_${slug || Date.now().toString(36)}`;
 }
 
 function stripUndefined(input) {

@@ -18,6 +18,53 @@
     </header>
 
     <main class="app-shell">
+      <section class="workspace-setup" aria-labelledby="workspace-title">
+        <div class="section-heading">
+          <h2 id="workspace-title">Workspace</h2>
+          <p>Create a workspace, add people, and organize work before connecting any integration.</p>
+        </div>
+        <div class="setup-grid">
+          <form id="workspace-form" autocomplete="off">
+            <label>
+              Workspace name
+              <input id="workspace-name" name="name" required maxlength="80" placeholder="Operations Team" />
+            </label>
+            <button type="submit">Use Workspace</button>
+          </form>
+          <form id="member-form" autocomplete="off">
+            <label>
+              Team member
+              <input id="member-name" name="displayName" required maxlength="80" placeholder="Ops Lead" />
+            </label>
+            <button type="submit">Add Member</button>
+          </form>
+          <form id="project-form" autocomplete="off">
+            <label>
+              Project
+              <input id="project-name" name="name" required maxlength="100" placeholder="Customer Follow-Up" />
+            </label>
+            <button type="submit">Add Project</button>
+          </form>
+          <form id="list-form" autocomplete="off">
+            <label>
+              List
+              <input id="list-name" name="name" required maxlength="100" placeholder="Today" />
+            </label>
+            <button type="submit">Add List</button>
+          </form>
+        </div>
+        <div class="workspace-summary" aria-live="polite">
+          <div>
+            <strong id="workspace-current">My Workspace</strong>
+            <span id="workspace-counts">0 members · 0 projects · 0 lists</span>
+          </div>
+          <label>
+            Switch workspace
+            <select id="workspace-select"></select>
+          </label>
+        </div>
+      </section>
+
       <section class="task-entry" aria-labelledby="create-task-title">
         <div class="section-heading">
           <h2 id="create-task-title">Create Task</h2>
@@ -30,11 +77,15 @@
           </label>
           <label>
             Owner
-            <select id="task-owner" name="ownerId">
-              <option value="user_owner">Owner</option>
-              <option value="user_ops">Ops Lead</option>
-              <option value="unassigned">Unassigned</option>
-            </select>
+            <select id="task-owner" name="ownerId"></select>
+          </label>
+          <label>
+            Project
+            <select id="task-project" name="projectId"></select>
+          </label>
+          <label>
+            List
+            <select id="task-list" name="listId"></select>
           </label>
           <label>
             Priority

@@ -27,6 +27,7 @@ http://localhost:3100/healthz
 ```text
 GET    /healthz
 POST   /api/workspaces
+GET    /api/workspaces/:workspaceId
 POST   /api/workspaces/:workspaceId/users
 POST   /api/workspaces/:workspaceId/projects
 POST   /api/workspaces/:workspaceId/lists

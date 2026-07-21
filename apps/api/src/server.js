@@ -186,6 +186,11 @@ async function route({ method, url, body, rawBody, headers, store, slackSigningS
     return { status: 201, body: store.createWorkspace(body) };
   }
 
+  const workspaceGetMatch = url.pathname.match(/^\/api\/workspaces\/([^/]+)$/);
+  if (method === 'GET' && workspaceGetMatch) {
+    return { body: store.requireWorkspace(workspaceGetMatch[1]) };
+  }
+
   const workspaceUserMatch = url.pathname.match(/^\/api\/workspaces\/([^/]+)\/users$/);
   if (method === 'POST' && workspaceUserMatch) {
     return { status: 201, body: store.addWorkspaceUser(workspaceUserMatch[1], body) };
