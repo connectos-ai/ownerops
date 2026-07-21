@@ -25,8 +25,9 @@ http://localhost:3100/
 - Priority and due date entry.
 - Search and quick filters.
 - Summary counts for open, due today, blocked, and owner-decision work.
-- Kanban columns backed by canonical `/api/boards/kanban` endpoint.
+- Kanban columns rendered from canonical task list API.
 - Status moves through canonical task status API.
+- Subtasks, comments, archive, reopen, and archived-task recovery through canonical task APIs.
 
 ## Current Limitations
 

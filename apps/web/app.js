@@ -180,8 +180,8 @@ function renderWorkspace() {
 }
 
 async function refreshTasks() {
-  const response = await api(`/api/boards/kanban?workspaceId=${workspace.id}`);
-  tasks = columns.flatMap(([status]) => response[status] || []);
+  const response = await api(`/api/tasks?workspaceId=${workspace.id}&includeArchived=true`);
+  tasks = response.tasks || [];
   render();
 }
 
@@ -199,6 +199,46 @@ async function updateStatus(task, status) {
       waitingOn: status === 'WAITING' ? task.waitingOn || 'Waiting on reply' : undefined,
       blockedReason: status === 'BLOCKED' ? task.blockedReason || 'Blocked until next update' : undefined
     }
+  });
+  await refreshTasks();
+}
+
+async function archiveTask(task) {
+  await api(`/api/tasks/${task.id}/archive`, {
+    method: 'POST',
+    body: { workspaceId: workspace.id, actorId: 'user_owner' }
+  });
+  await refreshTasks();
+}
+
+async function reopenTask(task) {
+  await api(`/api/tasks/${task.id}/reopen`, {
+    method: 'POST',
+    body: { workspaceId: workspace.id, actorId: 'user_owner' }
+  });
+  await refreshTasks();
+}
+
+async function addTaskComment(task, body) {
+  await api(`/api/tasks/${task.id}/comments`, {
+    method: 'POST',
+    body: { workspaceId: workspace.id, authorId: 'user_owner', body }
+  });
+  await refreshTasks();
+}
+
+async function addSubtask(task, title) {
+  await api(`/api/tasks/${task.id}/subtasks`, {
+    method: 'POST',
+    body: { workspaceId: workspace.id, title, ownerId: task.ownerId || 'unassigned' }
+  });
+  await refreshTasks();
+}
+
+async function completeSubtask(task, subtask) {
+  await api(`/api/tasks/${task.id}/subtasks/${subtask.id}/status`, {
+    method: 'PATCH',
+    body: { workspaceId: workspace.id, status: 'DONE', actorId: 'user_owner' }
   });
   await refreshTasks();
 }
@@ -242,22 +282,79 @@ function renderColumn(status, label, visibleTasks) {
 
 function renderTaskCard(task) {
   const card = template.content.firstElementChild.cloneNode(true);
+  card.classList.toggle('is-archived', Boolean(task.archivedAt));
   card.querySelector('h3').textContent = task.title;
   card.querySelector('.priority').textContent = task.priority;
   card.querySelector('.task-description').textContent = task.description || task.desiredOutcome || 'No next action yet.';
   card.querySelector('.task-owner').textContent = displayName(task.ownerId);
   card.querySelector('.task-due').textContent = formatDate(task.dueAt);
+  renderSubtasks(card, task);
+  renderComments(card, task);
+  card.querySelector('[data-form="subtask"]').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const input = event.currentTarget.elements.title;
+    const title = String(input.value || '').trim();
+    if (!title) return;
+    input.value = '';
+    await addSubtask(task, title);
+  });
+  card.querySelector('[data-form="comment"]').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const input = event.currentTarget.elements.body;
+    const body = String(input.value || '').trim();
+    if (!body) return;
+    input.value = '';
+    await addTaskComment(task, body);
+  });
   card.querySelectorAll('[data-action]').forEach((button) => {
-    const status = button.dataset.action;
-    button.disabled = task.status === status;
-    button.addEventListener('click', () => updateStatus(task, status));
+    const action = button.dataset.action;
+    if (action === 'ARCHIVE') {
+      button.disabled = Boolean(task.archivedAt);
+      button.addEventListener('click', () => archiveTask(task));
+      return;
+    }
+    if (action === 'REOPEN') {
+      button.disabled = !task.archivedAt;
+      button.addEventListener('click', () => reopenTask(task));
+      return;
+    }
+    button.disabled = Boolean(task.archivedAt) || task.status === action;
+    button.addEventListener('click', () => updateStatus(task, action));
   });
   return card;
+}
+
+function renderSubtasks(card, task) {
+  const list = card.querySelector('.subtask-list');
+  list.replaceChildren(...(task.subtasks || []).map((subtask) => {
+    const item = document.createElement('li');
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = subtask.status === 'DONE' ? 'Done' : 'Mark done';
+    button.disabled = subtask.status === 'DONE' || Boolean(task.archivedAt);
+    button.addEventListener('click', () => completeSubtask(task, subtask));
+    const title = document.createElement('span');
+    title.textContent = subtask.title;
+    item.append(title, button);
+    return item;
+  }));
+}
+
+function renderComments(card, task) {
+  const list = card.querySelector('.comment-list');
+  const recent = (task.comments || []).slice(-3);
+  list.replaceChildren(...recent.map((comment) => {
+    const item = document.createElement('li');
+    item.textContent = comment.body;
+    return item;
+  }));
 }
 
 function filterTasks(items) {
   const query = searchInput.value.trim().toLowerCase();
   return items.filter((task) => {
+    if (activeFilter === 'archived') return Boolean(task.archivedAt);
+    if (task.archivedAt) return false;
     if (activeFilter === 'today' && !isDueToday(task)) return false;
     if (activeFilter === 'waiting' && task.status !== 'WAITING') return false;
     if (activeFilter === 'blocked' && task.status !== 'BLOCKED') return false;

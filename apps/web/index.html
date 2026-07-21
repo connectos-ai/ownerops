@@ -114,6 +114,7 @@
         <button type="button" class="tab" data-filter="waiting">Waiting</button>
         <button type="button" class="tab" data-filter="blocked">Blocked</button>
         <button type="button" class="tab" data-filter="owner">Needs Owner</button>
+        <button type="button" class="tab" data-filter="archived">Archived</button>
         <label class="search-field">
           <span>Search</span>
           <input id="task-search" type="search" placeholder="Task, owner, tag" />
@@ -147,12 +148,30 @@
           <div><dt>Owner</dt><dd class="task-owner"></dd></div>
           <div><dt>Due</dt><dd class="task-due"></dd></div>
         </dl>
+        <ul class="subtask-list"></ul>
+        <ul class="comment-list"></ul>
+        <form class="inline-task-form" data-form="subtask">
+          <label>
+            Subtask
+            <input name="title" maxlength="120" placeholder="Next small step" />
+          </label>
+          <button type="submit">Add subtask</button>
+        </form>
+        <form class="inline-task-form" data-form="comment">
+          <label>
+            Comment
+            <input name="body" maxlength="240" placeholder="Add update" />
+          </label>
+          <button type="submit">Add comment</button>
+        </form>
         <div class="task-actions">
           <button type="button" data-action="READY">Ready</button>
           <button type="button" data-action="IN_PROGRESS">Start</button>
           <button type="button" data-action="WAITING">Waiting</button>
           <button type="button" data-action="BLOCKED">Blocked</button>
           <button type="button" data-action="DONE">Done</button>
+          <button type="button" data-action="ARCHIVE">Archive</button>
+          <button type="button" data-action="REOPEN">Reopen</button>
         </div>
       </article>
     </template>

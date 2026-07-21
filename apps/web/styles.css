@@ -302,6 +302,10 @@ textarea {
   padding: 0.75rem;
 }
 
+.task-card.is-archived {
+  opacity: 0.72;
+}
+
 .task-card-header {
   align-items: start;
   display: flex;
@@ -349,6 +353,47 @@ textarea {
 .task-card dd {
   margin: 0;
   text-align: right;
+}
+
+.subtask-list,
+.comment-list {
+  display: grid;
+  gap: 0.35rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.subtask-list li,
+.comment-list li {
+  background: var(--surface-muted);
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  padding: 0.4rem;
+}
+
+.subtask-list li {
+  align-items: center;
+  display: flex;
+  gap: 0.4rem;
+  justify-content: space-between;
+}
+
+.subtask-list button,
+.inline-task-form button {
+  min-height: 1.9rem;
+  padding: 0.25rem 0.45rem;
+}
+
+.inline-task-form {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.inline-task-form input {
+  min-height: 2rem;
+  padding: 0.35rem 0.45rem;
 }
 
 .task-actions {
