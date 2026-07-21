@@ -61,7 +61,7 @@ export function handleSlackUrlVerification(payload) {
   return { challenge: String(payload.challenge || '') };
 }
 
-export function handleSlackEvent(payload, store) {
+export async function handleSlackEvent(payload, store, options = {}) {
   const eventType = payload?.event?.type;
   if (!eventType) return { ok: true };
   if (eventType === 'app_uninstalled') {
@@ -71,6 +71,16 @@ export function handleSlackEvent(payload, store) {
   if (eventType === 'tokens_revoked') {
     store.revokeSlackInstallationByTeam?.(payload.team_id, 'tokens_revoked');
     return { ok: true };
+  }
+  if (eventType === 'app_home_opened') {
+    const result = await publishSlackAppHomeFromInstallation({
+      store,
+      teamId: payload.team_id,
+      slackUserId: payload.event?.user,
+      tokenEncryptionKey: options.tokenEncryptionKey,
+      publishView: options.publishView
+    });
+    return { ok: true, published: true, viewId: result.viewId };
   }
   return { ok: true };
 }
@@ -224,6 +234,36 @@ export async function openSlackTaskCreateModalFromInstallation(input) {
   };
 }
 
+export async function publishSlackAppHomeFromInstallation(input) {
+  const workspace = findWorkspaceBySlackTeam(input.store, input.teamId);
+  const installation = requireActiveSlackInstallation({
+    store: input.store,
+    workspaceId: workspace.id,
+    teamId: input.teamId
+  });
+  const token = decryptSlackToken(installation.botToken, input.tokenEncryptionKey);
+  const slackUserId = cleanRequired(input.slackUserId, 'slackUserId');
+  const tasks = input.store.allTasks(workspace.id);
+  const response = await input.publishView({
+    token,
+    userId: slackUserId,
+    view: buildOwnerOpsAppHomeView({
+      workspace,
+      slackUserId,
+      tasks
+    })
+  });
+  if (!response?.ok) {
+    throw slackSendError('SLACK_APP_HOME_PUBLISH_FAILED', response?.error || 'Slack App Home publish failed.', 502);
+  }
+  return {
+    ok: true,
+    teamId: installation.teamId,
+    userId: slackUserId,
+    viewId: response.view?.id || ''
+  };
+}
+
 export async function postSlackMessage({ token, channel, text, blocks = [] }) {
   const response = await fetch('https://slack.com/api/chat.postMessage', {
     method: 'POST',
@@ -235,6 +275,21 @@ export async function postSlackMessage({ token, channel, text, blocks = [] }) {
       channel: cleanRequired(channel, 'channel'),
       text: cleanRequired(text, 'text'),
       blocks
+    })
+  });
+  return response.json();
+}
+
+export async function publishSlackView({ token, userId, view }) {
+  const response = await fetch('https://slack.com/api/views.publish', {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${cleanRequired(token, 'token')}`,
+      'content-type': 'application/json; charset=utf-8'
+    },
+    body: JSON.stringify({
+      user_id: cleanRequired(userId, 'userId'),
+      view
     })
   });
   return response.json();
@@ -334,6 +389,63 @@ export function buildOwnerOpsTaskCreateView(input = {}) {
             value: priority
           }))
         }
+      }
+    ]
+  };
+}
+
+export function buildOwnerOpsAppHomeView({ workspace, slackUserId, tasks }) {
+  const owner = findWorkspaceUserBySlackId(workspace, slackUserId);
+  const activeTasks = tasks.filter((task) => !task.archivedAt && task.status !== TaskStatus.DONE && task.status !== TaskStatus.CANCELLED);
+  const assigned = owner
+    ? activeTasks.filter((task) => task.ownerId === owner.id)
+    : [];
+  const inbox = activeTasks.filter((task) => task.status === TaskStatus.INBOX || task.ownerId === 'unassigned');
+  const blocked = activeTasks.filter((task) => task.status === TaskStatus.BLOCKED);
+  const waiting = activeTasks.filter((task) => task.status === TaskStatus.WAITING);
+  return {
+    type: 'home',
+    blocks: [
+      {
+        type: 'header',
+        text: {
+          type: 'plain_text',
+          text: 'OwnerOps Home'
+        }
+      },
+      {
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: `*${workspace.name || 'Workspace'}* operating snapshot for <@${slackUserId}>.`
+        }
+      },
+      {
+        type: 'actions',
+        elements: [
+          {
+            type: 'button',
+            text: {
+              type: 'plain_text',
+              text: 'New task'
+            },
+            action_id: 'ownerops_open_task_modal',
+            value: JSON.stringify({ workspaceId: workspace.id })
+          }
+        ]
+      },
+      taskBucketSection('Inbox', inbox),
+      taskBucketSection('Assigned to you', assigned),
+      taskBucketSection('Blocked', blocked),
+      taskBucketSection('Waiting', waiting),
+      {
+        type: 'context',
+        elements: [
+          {
+            type: 'mrkdwn',
+            text: 'Use `/ownerops new` to create work, or turn a Slack message into a task from message shortcuts.'
+          }
+        ]
       }
     ]
   };
@@ -666,6 +778,25 @@ function slackViewSourceReference(payload) {
     cleanRequired(payload.view?.id, 'view.id'),
     payload.view?.hash || payload.view?.root_view_id || 'submitted'
   ].join(':');
+}
+
+function findWorkspaceUserBySlackId(workspace, slackUserId) {
+  return (workspace.users || []).find((user) => user.externalIds?.slackUserId === slackUserId) || null;
+}
+
+function taskBucketSection(label, tasks) {
+  const lines = tasks.slice(0, 5).map((task) => `• ${slackSafeLine(task.title)} (${task.status})`);
+  return {
+    type: 'section',
+    text: {
+      type: 'mrkdwn',
+      text: `*${label}* (${tasks.length})\n${lines.length ? lines.join('\n') : 'Nothing here right now.'}`
+    }
+  };
+}
+
+function slackSafeLine(value) {
+  return String(value || '').replace(/[<&>]/g, '').trim().slice(0, 100) || 'Untitled task';
 }
 
 function slackInputValue(values, fieldName) {

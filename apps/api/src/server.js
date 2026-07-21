@@ -22,6 +22,7 @@ import {
   handleSlackUrlVerification,
   openSlackView,
   postSlackMessage,
+  publishSlackView,
   parseSlackInteractionBody,
   sendSlackMessageFromInstallation,
   verifySlackOAuthState,
@@ -91,7 +92,8 @@ function createSlackWebApiConfig(options) {
   const provided = options.slackWebApi || {};
   return {
     openView: provided.openView || openSlackView,
-    postMessage: provided.postMessage || postSlackMessage
+    postMessage: provided.postMessage || postSlackMessage,
+    publishView: provided.publishView || publishSlackView
   };
 }
 
@@ -129,7 +131,12 @@ async function route({ method, url, body, rawBody, headers, store, slackSigningS
     requireValidSlackSignature({ headers, rawBody, slackSigningSecret });
     const urlVerification = handleSlackUrlVerification(body);
     if (urlVerification) return { body: urlVerification };
-    return { body: handleSlackEvent(body, store) };
+    return {
+      body: await handleSlackEvent(body, store, {
+        tokenEncryptionKey: slackOAuth.tokenEncryptionKey,
+        publishView: slackWebApi.publishView
+      })
+    };
   }
 
   if (method === 'POST' && url.pathname === '/slack/interactions') {

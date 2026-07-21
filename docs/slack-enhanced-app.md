@@ -15,6 +15,7 @@ The current public candidate implements:
 - Signed uninstall and token-revoked event handling.
 - Outgoing Slack message sending through `chat.postMessage`.
 - Task creation modal opening through `views.open`.
+- App Home publishing through `views.publish`.
 - Message shortcut handling for `ownerops_turn_message_into_task`.
 - Slash command task creation with `/ownerops task <task title>`.
 - Modal submission task creation with `view.callback_id: "ownerops_task_create"`.
@@ -22,7 +23,7 @@ The current public candidate implements:
 - Idempotency for retried Slack actions.
 - Optional Slack team-to-OwnerOps workspace scoping using `workspace.policies.slackTeamId`.
 
-The current slice does not yet implement App Home.
+The current slice does not yet implement full App Home interactivity beyond publishing the home view.
 
 ## OAuth Installation
 
@@ -101,6 +102,22 @@ The opened modal uses `callback_id: "ownerops_task_create"` and field IDs that m
 - `priority_block` / `priority_action`
 
 Reference: https://docs.slack.dev/reference/methods/views.open
+
+## App Home
+
+OwnerOps handles signed `app_home_opened` Events API payloads and publishes a per-user Home tab through Slack `views.publish`.
+
+The current Home tab includes:
+
+- Inbox task count and up to five examples.
+- Tasks assigned to the Slack-mapped OwnerOps user.
+- Blocked work.
+- Waiting work.
+- A `New task` action placeholder for the task modal flow.
+
+OwnerOps maps Slack user IDs using workspace user `externalIds.slackUserId`, builds the view from canonical task data, decrypts the bot token only for the Web API call, and returns non-secret publish metadata.
+
+Reference: https://docs.slack.dev/reference/methods/views.publish
 
 ## Request Verification
 

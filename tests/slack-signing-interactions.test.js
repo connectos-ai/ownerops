@@ -606,6 +606,113 @@ test('slack slash command opens task creation modal from installation', async ()
   }
 });
 
+test('slack app home opened publishes ownerops home view from installation', async () => {
+  let capturedToken = '';
+  let capturedHome = null;
+  let capturedUserId = '';
+  const app = createOwnerOpsServer({
+    slackSigningSecret: signingSecret,
+    slackOAuth: {
+      clientId: 'client_demo',
+      clientSecret: 'client_demo_private',
+      redirectUri: 'https://ownerops.example/slack/oauth/callback',
+      stateSecret: 'state_secret_demo',
+      tokenEncryptionKey: 'local_encryption_key_for_tests',
+      exchangeOAuthCode: async () => ({
+        ok: true,
+        access_token: 'bot_token_demo',
+        scope: 'commands,chat:write',
+        team: { id: 'T_DEMO', name: 'Demo Team' },
+        bot_user_id: 'B_DEMO'
+      })
+    },
+    slackWebApi: {
+      publishView: async ({ token, userId, view }) => {
+        capturedToken = token;
+        capturedUserId = userId;
+        capturedHome = view;
+        return { ok: true, view: { id: 'V_HOME', type: view.type } };
+      }
+    }
+  });
+  const server = app.listen(0);
+  await onceListening(server);
+  const baseUrl = `http://127.0.0.1:${server.address().port}`;
+
+  try {
+    await requestJson(baseUrl, 'POST', '/api/workspaces', {
+      id: 'workspace_demo',
+      name: 'Demo Team',
+      policies: { slackTeamId: 'T_DEMO' }
+    });
+    await requestJson(baseUrl, 'POST', '/api/workspaces/workspace_demo/users', {
+      id: 'user_owner',
+      displayName: 'Owner',
+      externalIds: { slackUserId: 'U_DEMO' }
+    });
+    await requestJson(baseUrl, 'POST', '/api/tasks', {
+      id: 'task_inbox',
+      workspaceId: 'workspace_demo',
+      title: 'Review inbox request',
+      createdBy: 'user_owner',
+      ownerId: 'unassigned',
+      status: 'INBOX'
+    });
+    await requestJson(baseUrl, 'POST', '/api/tasks', {
+      id: 'task_blocked',
+      workspaceId: 'workspace_demo',
+      title: 'Resolve blocked item',
+      createdBy: 'user_owner',
+      ownerId: 'user_owner',
+      status: 'BLOCKED',
+      blockedReason: 'Waiting for approval'
+    });
+    await requestJson(baseUrl, 'POST', '/api/tasks', {
+      id: 'task_waiting',
+      workspaceId: 'workspace_demo',
+      title: 'Check vendor reply',
+      createdBy: 'user_owner',
+      ownerId: 'user_owner',
+      status: 'WAITING',
+      waitingOn: 'Vendor'
+    });
+    const start = await requestJson(baseUrl, 'GET', '/slack/oauth/start?workspaceId=workspace_demo');
+    const state = new URL(start.authorizeUrl).searchParams.get('state');
+    await requestJson(baseUrl, 'GET', `/slack/oauth/callback?code=code_demo&state=${encodeURIComponent(state)}`);
+
+    const eventBody = JSON.stringify({
+      type: 'event_callback',
+      team_id: 'T_DEMO',
+      event_id: 'Ev_HOME',
+      event_time: 1_700_000_001,
+      event: {
+        type: 'app_home_opened',
+        user: 'U_DEMO',
+        tab: 'home'
+      }
+    });
+    const response = await signedRequest(baseUrl, '/slack/events', eventBody, 'application/json');
+    const snapshotText = JSON.stringify(app.ownerOpsStore.snapshot());
+    const homeText = JSON.stringify(capturedHome);
+
+    assert.equal(response.ok, true);
+    assert.equal(response.published, true);
+    assert.equal(capturedToken, 'bot_token_demo');
+    assert.equal(capturedUserId, 'U_DEMO');
+    assert.equal(capturedHome.type, 'home');
+    assert.match(homeText, /OwnerOps Home/);
+    assert.match(homeText, /Inbox/);
+    assert.match(homeText, /Assigned to you/);
+    assert.match(homeText, /Blocked/);
+    assert.match(homeText, /Waiting/);
+    assert.match(homeText, /Review inbox request/);
+    assert.match(homeText, /Resolve blocked item/);
+    assert.equal(snapshotText.includes('bot_token_demo'), false);
+  } finally {
+    await closeServer(server);
+  }
+});
+
 async function signedRequest(baseUrl, path, body, contentType) {
   const response = await signedFetch(baseUrl, path, body, contentType);
   const data = await response.json();

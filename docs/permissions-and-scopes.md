@@ -4,7 +4,7 @@ OwnerOps should request the least Slack permissions needed for installed mode.
 
 ## Current Public Candidate
 
-The current implemented Slack slice verifies signed requests, supports OAuth installation, stores Slack installation tokens encrypted at rest, handles uninstall and token-revoked events, handles one message shortcut, handles slash commands, opens the task creation modal, handles one modal submission, sends Slack messages, and handles one status action.
+The current implemented Slack slice verifies signed requests, supports OAuth installation, stores Slack installation tokens encrypted at rest, handles uninstall and token-revoked events, handles one message shortcut, handles slash commands, opens the task creation modal, handles one modal submission, publishes App Home, sends Slack messages, and handles one status action.
 
 The default example bot scopes are:
 
@@ -21,7 +21,7 @@ Deployments should remove scopes they do not actively use. Do not request histor
 Exact scopes must be finalized against Slack API implementation before release. Likely categories:
 
 - Commands for slash-command entrypoints.
-- Interactivity for buttons, selects, shortcuts, and modals.
+- Interactivity for buttons, selects, shortcuts, modals, and App Home actions.
 - Message shortcut support for turning Slack messages into OwnerOps tasks.
 - Chat posting only when OwnerOps needs to send task confirmations, reminders, or briefs.
 - Channel/history scopes only where needed and authorized.
