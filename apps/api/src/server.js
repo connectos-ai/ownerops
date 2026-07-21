@@ -12,18 +12,33 @@ import {
   updateTaskDetails
 } from '../../../packages/core/src/index.js';
 import { FileOwnerOpsStore, InMemoryOwnerOpsStore } from '../../../packages/storage/src/index.js';
+import {
+  handleSlackInteraction,
+  handleSlackUrlVerification,
+  parseSlackInteractionBody,
+  verifySlackRequest
+} from '../../../packages/slack/src/index.js';
 import { approveSuggestedTask, triageEmailToTaskSuggestion } from '../../../packages/triage/src/index.js';
 
 export { FileOwnerOpsStore, InMemoryOwnerOpsStore };
 
 export function createOwnerOpsServer(options = {}) {
   const store = options.store || createDefaultStore(options);
+  const slackSigningSecret = options.slackSigningSecret || process.env.OWNEROPS_SLACK_SIGNING_SECRET || '';
 
   return http.createServer(async (req, res) => {
     try {
       const url = new URL(req.url || '/', 'http://localhost');
-      const body = await readJsonBody(req);
-      const result = await route({ method: req.method || 'GET', url, body, store });
+      const requestBody = await readRequestBody(req);
+      const result = await route({
+        method: req.method || 'GET',
+        url,
+        body: requestBody.body,
+        rawBody: requestBody.rawBody,
+        headers: req.headers,
+        store,
+        slackSigningSecret
+      });
       sendJson(res, result.status || 200, result.body);
     } catch (error) {
       sendJson(res, error.statusCode || 500, {
@@ -43,9 +58,22 @@ function createDefaultStore(options) {
   return new InMemoryOwnerOpsStore();
 }
 
-async function route({ method, url, body, store }) {
+async function route({ method, url, body, rawBody, headers, store, slackSigningSecret }) {
   if (method === 'GET' && url.pathname === '/healthz') {
     return { body: { ok: true, service: 'ownerops-api' } };
+  }
+
+  if (method === 'POST' && url.pathname === '/slack/events') {
+    requireValidSlackSignature({ headers, rawBody, slackSigningSecret });
+    const urlVerification = handleSlackUrlVerification(body);
+    if (urlVerification) return { body: urlVerification };
+    return { body: { ok: true } };
+  }
+
+  if (method === 'POST' && url.pathname === '/slack/interactions') {
+    requireValidSlackSignature({ headers, rawBody, slackSigningSecret });
+    const payload = parseSlackInteractionBody(rawBody);
+    return { body: handleSlackInteraction(payload, store) };
   }
 
   if (method === 'POST' && url.pathname === '/api/workspaces') {
@@ -190,17 +218,36 @@ async function route({ method, url, body, store }) {
   throw notFound('ROUTE_NOT_FOUND', 'Route not found.');
 }
 
-async function readJsonBody(req) {
+async function readRequestBody(req) {
   if (!['POST', 'PATCH', 'PUT'].includes(req.method || 'GET')) return {};
   let raw = '';
   for await (const chunk of req) raw += chunk;
-  if (!raw.trim()) return {};
+  if (!raw.trim()) return { rawBody: '', body: {} };
+  const contentType = String(req.headers['content-type'] || '');
+  if (contentType.includes('application/x-www-form-urlencoded')) {
+    return { rawBody: raw, body: Object.fromEntries(new URLSearchParams(raw).entries()) };
+  }
   try {
-    return JSON.parse(raw);
+    return { rawBody: raw, body: JSON.parse(raw) };
   } catch {
     const error = new Error('Invalid JSON body.');
     error.statusCode = 400;
     error.code = 'INVALID_JSON';
+    throw error;
+  }
+}
+
+function requireValidSlackSignature({ headers, rawBody, slackSigningSecret }) {
+  const result = verifySlackRequest({
+    signingSecret: slackSigningSecret,
+    timestamp: headers['x-slack-request-timestamp'],
+    signature: headers['x-slack-signature'],
+    body: rawBody
+  });
+  if (!result.ok) {
+    const error = new Error('Slack request signature verification failed.');
+    error.statusCode = 401;
+    error.code = `SLACK_SIGNATURE_${result.reason.toUpperCase()}`;
     throw error;
   }
 }

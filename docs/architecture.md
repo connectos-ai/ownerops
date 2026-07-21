@@ -9,10 +9,11 @@ apps/
   api/       HTTP API, webhooks, Slack request handlers
   web/       Standalone task manager and Kanban UI
   worker/    Scheduler, reminders, briefs, background work
-
 packages/
   core/      Domain models, policies, events
   triage/    Work detection, owner-decision filter, summaries
+  storage/   Development storage and future database boundary
+  slack/     Slack signing, payload parsing, interaction handlers
   adapters/  Slack, email, AI, task destination, ConnectOS ports
 ```
 
@@ -20,7 +21,7 @@ The domain layer must not depend on Slack SDK objects, Gmail API objects, DoBoth
 
 ## Independence Rule
 
-OwnerOps must start and provide value without:
+OwnerOps must start providing value without:
 
 - Slack
 - Email
@@ -78,11 +79,13 @@ TaskDestination
 
 Potential implementations include direct Slack, direct Gmail, Microsoft Graph, mock providers, local deterministic rules, OpenAI-compatible providers, local model providers, and optional ConnectOS providers.
 
+## Slack Enhanced Boundary
+
+Slack request verification and interaction parsing live in `packages/slack`. The API app exposes `/slack/events` and `/slack/interactions`, but task updates still go through the canonical core task model and storage layer. Slack-specific payloads must not leak into core task logic.
+
 ## Canonical Data Model
 
-OwnerOps keeps the canonical task model even when tasks are mirrored into Slack.
-
-Minimum task fields:
+OwnerOps keeps a canonical task model even when tasks are mirrored into Slack. Minimum task fields:
 
 - `id`
 - `workspaceId`

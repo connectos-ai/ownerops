@@ -20,6 +20,7 @@ export class InMemoryOwnerOpsStore {
     this.workspaces = new Map();
     this.tasks = new Map();
     this.suggestions = new Map();
+    this.processedSlackActions = new Set();
     if (snapshot) this.loadSnapshot(snapshot);
   }
 
@@ -102,6 +103,15 @@ export class InMemoryOwnerOpsStore {
     return suggestion;
   }
 
+  hasProcessedSlackAction(idempotencyKey) {
+    return this.processedSlackActions.has(idempotencyKey);
+  }
+
+  markProcessedSlackAction(idempotencyKey) {
+    this.processedSlackActions.add(idempotencyKey);
+    this.persist();
+  }
+
   getSuggestion(workspaceId, suggestionId) {
     const suggestion = this.suggestions.get(suggestionId);
     const suggestionWorkspaceId = suggestion?.workspaceId || suggestion?.task?.workspaceId;
@@ -140,7 +150,8 @@ export class InMemoryOwnerOpsStore {
       exportedAt: new Date().toISOString(),
       workspaces: [...this.workspaces.values()],
       tasks: [...this.tasks.values()],
-      suggestions: [...this.suggestions.values()]
+      suggestions: [...this.suggestions.values()],
+      processedSlackActions: [...this.processedSlackActions.values()]
     };
   }
 
@@ -148,6 +159,7 @@ export class InMemoryOwnerOpsStore {
     for (const workspace of snapshot.workspaces || []) this.workspaces.set(workspace.id, workspace);
     for (const task of snapshot.tasks || []) this.tasks.set(task.id, task);
     for (const suggestion of snapshot.suggestions || []) this.suggestions.set(suggestion.id, suggestion);
+    for (const action of snapshot.processedSlackActions || []) this.processedSlackActions.add(action);
   }
 
   persist() {}
