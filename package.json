@@ -6,7 +6,9 @@
   "description": "Open-source owner-operator triage Slack-native task system.",
   "license": "Apache-2.0",
   "scripts": {
+    "audit": "npm audit --audit-level=high",
     "check": "node --check packages/core/src/index.js && node --check packages/triage/src/index.js && node --check packages/adapters/src/index.js && node --check packages/storage/src/index.js && node --check packages/slack/src/index.js && node --check apps/api/src/server.js && bash -n scripts/backup-data.sh && bash -n scripts/restore-data.sh && bash scripts/public-release-audit.sh .",
+    "ci": "npm run check && npm test && npm run audit",
     "test": "node --test"
   },
   "engines": {

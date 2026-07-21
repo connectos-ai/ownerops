@@ -60,8 +60,10 @@ This repository is being prepared as a public open-source release candidate. Do 
 Run the current local checks:
 
 ```bash
+npm ci
 npm test
 npm run check
+npm run ci
 ```
 
 Start the standalone API:
@@ -79,6 +81,7 @@ See:
 - `docs/architecture.md`
 - `docs/api.md`
 - `docs/self-hosting.md`
+- `docs/ci-and-release-gates.md`
 - `docs/slack-enhanced-app.md`
 - `docs/permissions-and-scopes.md`
 - `docs/task-system.md`

@@ -6,7 +6,7 @@ Status: FAIL
 
 ## Reason
 
-This public repository candidate includes an initial pure-core vertical slice for standalone tasks, deterministic triage, mock email-to-task approval, Kanban grouping, and daily/weekly briefs. It does not yet include the complete working OwnerOps product, full app/API/UI implementation, comprehensive automated test suite, CI gates, dependency audit, git-history audit report, or full secret/privacy scan evidence required for public release.
+This public repository candidate includes standalone task management, deterministic triage, mock email-to-task approval, Kanban grouping, daily/weekly briefs, signed Slack interactions, OAuth installation with encrypted token storage, outgoing Slack messages, modal task creation, and App Home publishing. Local CI configuration and dependency audit commands now exist. It does not yet include the complete working OwnerOps product, production relational persistence, standalone web UI, GitHub-hosted CI evidence, full dependency/security audit evidence, git-history audit report, or full secret/privacy scan evidence required for public release.
 
 Do not publish yet.
 

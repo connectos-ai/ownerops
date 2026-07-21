@@ -26,6 +26,7 @@ OwnerOps may not be published until every item is complete.
 
 ## Quality
 
+- [x] CI workflow configured locally.
 - [ ] Install succeeds from clean checkout.
 - [ ] Tests pass.
 - [ ] Build passes.
