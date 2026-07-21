@@ -138,6 +138,71 @@ test('slack message shortcut creates canonical task with source metadata and dup
   }
 });
 
+test('slack slash command creates a canonical task from command text', async () => {
+  const app = createOwnerOpsServer({ slackSigningSecret: signingSecret });
+  const server = app.listen(0);
+  await onceListening(server);
+  const baseUrl = `http://127.0.0.1:${server.address().port}`;
+
+  try {
+    await requestJson(baseUrl, 'POST', '/api/workspaces', {
+      id: 'workspace_demo',
+      name: 'Demo Team',
+      policies: { slackTeamId: 'T_DEMO' }
+    });
+
+    const commandBody = new URLSearchParams({
+      token: 'deprecated_verification_token_ignored',
+      team_id: 'T_DEMO',
+      team_domain: 'demo',
+      channel_id: 'C_DEMO',
+      channel_name: 'ownerops-inbox',
+      user_id: 'U_DEMO',
+      user_name: 'owner',
+      command: '/ownerops',
+      text: 'task Prepare weekly checklist',
+      response_url: 'https://hooks.slack.com/commands/example',
+      trigger_id: 'trigger_demo'
+    }).toString();
+
+    const response = await signedRequest(baseUrl, '/slack/commands', commandBody, 'application/x-www-form-urlencoded');
+    const tasks = await requestJson(baseUrl, 'GET', '/api/tasks?workspaceId=workspace_demo&query=weekly');
+
+    assert.equal(response.response_type, 'ephemeral');
+    assert.equal(response.text, 'OwnerOps created task_from_slack_command_TDEMO_CDEMO_UDEMO.');
+    assert.equal(tasks.tasks.length, 1);
+    assert.equal(tasks.tasks[0].title, 'Prepare weekly checklist');
+    assert.equal(tasks.tasks[0].sourceType, 'slack_command');
+    assert.equal(tasks.tasks[0].sourceReference, 'T_DEMO:C_DEMO:U_DEMO:/ownerops:task Prepare weekly checklist');
+    assert.equal(tasks.tasks[0].createdBy, 'slack:U_DEMO');
+    assert.equal(tasks.tasks[0].requestedBy, 'slack:U_DEMO');
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test('slack slash command rejects unmapped teams', async () => {
+  const app = createOwnerOpsServer({ slackSigningSecret: signingSecret });
+  const server = app.listen(0);
+  await onceListening(server);
+  const baseUrl = `http://127.0.0.1:${server.address().port}`;
+
+  try {
+    const commandBody = new URLSearchParams({
+      team_id: 'T_UNKNOWN',
+      channel_id: 'C_DEMO',
+      user_id: 'U_DEMO',
+      command: '/ownerops',
+      text: 'task Prepare weekly checklist'
+    }).toString();
+    const response = await signedFetch(baseUrl, '/slack/commands', commandBody, 'application/x-www-form-urlencoded');
+
+    assert.equal(response.status, 404);
+  } finally {
+    await closeServer(server);
+  }
+});
+
 test('slack interaction rejects cross-workspace team mismatch', async () => {
   const app = createOwnerOpsServer({ slackSigningSecret: signingSecret });
   const server = app.listen(0);

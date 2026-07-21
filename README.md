@@ -49,7 +49,7 @@ OwnerOps must remain useful when DoBoth and ConnectOS are disconnected.
 - Enhanced Slack app: use OwnerOps app integrations when you want automation.
 
 See `docs/slack-capability-matrix.md` before choosing a Slack setup.
-See `docs/slack-enhanced-app.md` for the current signed-request interaction slice.
+See `docs/slack-enhanced-app.md` for the current signed-request Slack command and interaction slice.
 
 ## Current Status
 

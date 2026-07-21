@@ -13,6 +13,7 @@ import {
 } from '../../../packages/core/src/index.js';
 import { FileOwnerOpsStore, InMemoryOwnerOpsStore } from '../../../packages/storage/src/index.js';
 import {
+  handleSlackCommand,
   handleSlackInteraction,
   handleSlackUrlVerification,
   parseSlackInteractionBody,
@@ -74,6 +75,11 @@ async function route({ method, url, body, rawBody, headers, store, slackSigningS
     requireValidSlackSignature({ headers, rawBody, slackSigningSecret });
     const payload = parseSlackInteractionBody(rawBody);
     return { body: handleSlackInteraction(payload, store) };
+  }
+
+  if (method === 'POST' && url.pathname === '/slack/commands') {
+    requireValidSlackSignature({ headers, rawBody, slackSigningSecret });
+    return { body: handleSlackCommand(body, store) };
   }
 
   if (method === 'POST' && url.pathname === '/api/workspaces') {

@@ -86,6 +86,50 @@ export function handleSlackInteraction(payload, store) {
   };
 }
 
+export function handleSlackCommand(body, store) {
+  const command = cleanRequired(body.command, 'command');
+  const text = cleanRequired(body.text, 'text');
+  const workspace = findWorkspaceBySlackTeam(store, body.team_id);
+  const taskText = parseOwnerOpsCommandText(text);
+  const sourceReference = [
+    cleanRequired(body.team_id, 'team_id'),
+    cleanRequired(body.channel_id, 'channel_id'),
+    cleanRequired(body.user_id, 'user_id'),
+    command,
+    text
+  ].join(':');
+
+  const existing = store.findTaskBySource(workspace.id, 'slack_command', sourceReference);
+  if (existing) {
+    return {
+      response_type: 'ephemeral',
+      text: `OwnerOps already has ${existing.id} for this command.`
+    };
+  }
+
+  const task = store.createTask({
+    id: `task_from_slack_command_${sanitizeIdPart(body.team_id)}_${sanitizeIdPart(body.channel_id)}_${sanitizeIdPart(body.user_id)}`,
+    workspaceId: workspace.id,
+    title: taskText.title,
+    description: taskText.description,
+    desiredOutcome: `Requested outcome: ${taskText.title}`,
+    sourceType: 'slack_command',
+    sourceReference,
+    sourceUrl: '',
+    createdBy: `slack:${body.user_id}`,
+    ownerId: 'unassigned',
+    requestedBy: `slack:${body.user_id}`,
+    status: TaskStatus.INBOX,
+    priority: inferPriority(taskText.title),
+    tags: ['slack']
+  });
+
+  return {
+    response_type: 'ephemeral',
+    text: `OwnerOps created ${task.id}.`
+  };
+}
+
 export function handleSlackMessageAction(payload, store) {
   if (payload.callback_id !== 'ownerops_turn_message_into_task') {
     throw validationError('SLACK_SHORTCUT_UNSUPPORTED', 'Unsupported Slack shortcut.');
@@ -196,6 +240,16 @@ function slackMessageToTask(payload, workspaceId, sourceReference) {
     priority: inferPriority(messageText),
     tags: ['slack']
   };
+}
+
+function parseOwnerOpsCommandText(text) {
+  const trimmed = cleanRequired(text, 'text');
+  const taskMatch = trimmed.match(/^task\s+(.+)$/i);
+  if (!taskMatch) {
+    throw validationError('SLACK_COMMAND_UNSUPPORTED', 'Use /ownerops task <task title>.');
+  }
+  const title = cleanRequired(taskMatch[1], 'task title');
+  return { title: firstLine(title), description: title };
 }
 
 function slackMessageSourceReference(payload) {

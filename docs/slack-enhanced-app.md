@@ -9,12 +9,14 @@ The current public candidate implements:
 - `POST /slack/events` with Slack request signature verification.
 - Slack URL verification challenge response.
 - `POST /slack/interactions` with Slack request signature verification.
+- `POST /slack/commands` with Slack request signature verification.
 - Message shortcut handling for `ownerops_turn_message_into_task`.
+- Slash command task creation with `/ownerops task <task title>`.
 - Block Kit action handling for `ownerops_task_status`.
 - Idempotency for retried Slack actions.
 - Optional Slack team-to-OwnerOps workspace scoping using `workspace.policies.slackTeamId`.
 
-The current slice does not yet implement Slack OAuth, token storage, App Home, slash commands, modals, or outgoing Slack API calls.
+The current slice does not yet implement Slack OAuth, token storage, App Home, modals, or outgoing Slack API calls.
 
 ## Request Verification
 
@@ -32,6 +34,23 @@ Reference: https://docs.slack.dev/authentication/verifying-requests-from-slack/
 Slack Events API requests should receive a `2xx` response within three seconds. OwnerOps should keep Slack handlers short and move longer work to a worker queue as the enhanced app grows.
 
 Reference: https://docs.slack.dev/apis/events-api/
+
+## Slash Command: Create Task
+
+The implemented slash command creates a task directly from command text:
+
+```text
+/ownerops task Prepare weekly checklist
+```
+
+OwnerOps maps the Slack `team_id` to an OwnerOps workspace using `workspace.policies.slackTeamId`, then creates a canonical task with:
+
+- `sourceType: "slack_command"`
+- `sourceReference` built from Slack team, channel, user, command, and command text.
+- `createdBy` and `requestedBy` set to the Slack user who ran the command.
+- `status: "INBOX"`
+
+Reference: https://docs.slack.dev/interactivity/implementing-slash-commands
 
 ## Message Shortcut: Turn Message Into Task
 

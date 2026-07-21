@@ -50,6 +50,7 @@ GET    /api/briefs/daily?workspaceId=:workspaceId&now=:isoTimestamp
 GET    /api/briefs/weekly?workspaceId=:workspaceId
 POST   /slack/events
 POST   /slack/interactions
+POST   /slack/commands
 ```
 
 Task list routes support these filters: `query`, `ownerId`, `projectId`, `listId`, `status`, `tag`, `dueBefore`, `dueAfter`, and `includeArchived=true`.
