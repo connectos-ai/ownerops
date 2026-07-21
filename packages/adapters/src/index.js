@@ -31,6 +31,14 @@ export class LocalTaskDestination {
   }
 
   async createTask(task) {
+    const existing = this.tasks.find((item) => (
+      item.workspaceId === task.workspaceId
+      && item.sourceType === task.sourceType
+      && item.sourceReference
+      && item.sourceReference === task.sourceReference
+    ));
+    if (existing) return existing;
+
     this.tasks.push(task);
     return task;
   }

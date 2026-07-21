@@ -6,7 +6,7 @@ Status: FAIL
 
 ## Reason
 
-This public repository candidate is newly scaffolded and does not yet include the complete working OwnerOps product, automated test suite, CI gates, git-history audit, or full secret/privacy scan evidence required for public release.
+This public repository candidate includes an initial pure-core vertical slice for standalone tasks, deterministic triage, mock email-to-task approval, Kanban grouping, and daily/weekly briefs. It does not yet include the complete working OwnerOps product, full app/API/UI implementation, comprehensive automated test suite, CI gates, dependency audit, git-history audit report, or full secret/privacy scan evidence required for public release.
 
 Do not publish yet.
 

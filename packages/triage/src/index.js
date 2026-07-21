@@ -1,4 +1,4 @@
-import { TaskPriority } from '../../core/src/index.js';
+import { TaskPriority, TaskStatus, createTask } from '../../core/src/index.js';
 
 const WORK_PATTERNS = [
   /can you (take care|send|schedule|check|update|ask|make sure)/i,
@@ -40,4 +40,66 @@ export function classifyTextForWork(input) {
       ? 'The content includes language that appears to request follow-up work.'
       : 'No clear requested outcome was detected.'
   };
+}
+
+export function triageEmailToTaskSuggestion(email, options) {
+  const workspaceId = cleanRequired(options?.workspaceId, 'workspaceId');
+  const ownerId = cleanRequired(options?.defaultOwnerId, 'defaultOwnerId');
+  const body = String(email.body || '');
+  const subject = String(email.subject || 'Email follow-up').trim();
+  const classification = classifyTextForWork({ text: `${subject}\n${body}` });
+  const title = subject || firstSentence(body) || 'Email follow-up';
+
+  return {
+    id: `suggestion_${workspaceId}_${cleanRequired(email.id, 'email.id')}`,
+    shouldBecomeTask: classification.containsWork,
+    classification,
+    source: {
+      type: 'email',
+      messageId: email.id,
+      subject,
+      receivedAt: email.receivedAt || null
+    },
+    task: createTask({
+      id: `task_from_${email.id}`,
+      workspaceId,
+      title,
+      description: body.slice(0, 2000),
+      desiredOutcome: inferOutcome(body),
+      sourceType: 'email',
+      sourceReference: email.id,
+      createdBy: 'triage',
+      ownerId,
+      status: classification.containsWork ? TaskStatus.READY : TaskStatus.INBOX,
+      priority: classification.priority,
+      ownerDecisionRequired: classification.ownerDecisionRequired,
+      ownerDecisionReason: classification.ownerDecisionRequired ? 'The source appears to request approval or authorization.' : '',
+      confidence: classification.confidence
+    })
+  };
+}
+
+export async function approveSuggestedTask(suggestion, taskDestination, options = {}) {
+  if (!suggestion.shouldBecomeTask) throw new Error('Suggestion is not task-worthy');
+  const task = {
+    ...suggestion.task,
+    approvedBy: cleanRequired(options.actorId || 'system', 'actorId'),
+    approvedAt: new Date().toISOString()
+  };
+  return taskDestination.createTask(task);
+}
+
+function inferOutcome(text) {
+  const sentence = firstSentence(text);
+  return sentence ? `Requested outcome: ${sentence}` : 'Requested outcome is captured from the source message.';
+}
+
+function firstSentence(text) {
+  return String(text || '').split(/[.!?]\s/)[0]?.trim().slice(0, 180) || '';
+}
+
+function cleanRequired(value, name) {
+  const text = String(value || '').trim();
+  if (!text) throw new Error(`${name} is required`);
+  return text;
 }
