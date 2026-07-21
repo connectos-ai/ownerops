@@ -1,6 +1,6 @@
 # Slack Enhanced App
 
-OwnerOps Enhanced Mode adds a Slack app service on top of the standalone task engine. Slack is an operating surface, not the canonical database. The canonical task remains in OwnerOps storage and Slack interactions update that task through public application services.
+OwnerOps Enhanced Mode adds a Slack app service on top of the standalone task engine. Slack is an operating surface, not the canonical database. The canonical task remains in OwnerOps storage, and Slack interactions update that task through public application services.
 
 ## Current Implemented Slice
 
@@ -9,11 +9,12 @@ The current public candidate implements:
 - `POST /slack/events` with Slack request signature verification.
 - Slack URL verification challenge response.
 - `POST /slack/interactions` with Slack request signature verification.
-- A first Block Kit action handler, `ownerops_task_status`, that updates a canonical task status.
+- Message shortcut handling for `ownerops_turn_message_into_task`.
+- Block Kit action handling for `ownerops_task_status`.
 - Idempotency for retried Slack actions.
 - Optional Slack team-to-OwnerOps workspace scoping using `workspace.policies.slackTeamId`.
 
-The current slice does not yet implement Slack OAuth, token storage, App Home, message shortcuts, slash commands, modals, or outgoing Slack API calls.
+The current slice does not yet implement Slack OAuth, token storage, App Home, slash commands, modals, or outgoing Slack API calls.
 
 ## Request Verification
 
@@ -31,6 +32,38 @@ Reference: https://docs.slack.dev/authentication/verifying-requests-from-slack/
 Slack Events API requests should receive a `2xx` response within three seconds. OwnerOps should keep Slack handlers short and move longer work to a worker queue as the enhanced app grows.
 
 Reference: https://docs.slack.dev/apis/events-api/
+
+## Message Shortcut: Turn Message Into Task
+
+The implemented message shortcut expects:
+
+```json
+{
+  "type": "message_action",
+  "callback_id": "ownerops_turn_message_into_task",
+  "team": { "id": "T_DEMO" },
+  "channel": { "id": "C_DEMO" },
+  "user": { "id": "U_DEMO" },
+  "message": {
+    "user": "U_REQUESTER",
+    "text": "Please follow up with customer by Friday.",
+    "ts": "1700000000.000300",
+    "permalink": "https://example.slack.com/archives/C_DEMO/p1700000000000300"
+  }
+}
+```
+
+OwnerOps creates a canonical task with:
+
+- `sourceType: "slack_message"`
+- `sourceReference` built from Slack team, channel, and message timestamp.
+- `sourceUrl` copied from the Slack permalink when provided.
+- `requestedBy` set to the Slack message author.
+- `createdBy` set to the Slack user who triggered the shortcut.
+
+Duplicate protection uses both the Slack action idempotency key and the canonical task source reference.
+
+Reference: https://docs.slack.dev/reference/interaction-payloads/shortcuts-interaction-payload
 
 ## Status Action
 
@@ -61,4 +94,4 @@ When a workspace has `policies.slackTeamId`, Slack interaction payloads must com
 
 ## Retry Handling
 
-Slack may retry requests. OwnerOps stores a processed Slack action key using the Slack team ID, user ID, action ID, workspace ID, task ID, status, and action timestamp. A retried action receives an ephemeral already-handled response instead of applying the status update twice.
+Slack may retry requests. OwnerOps stores processed Slack action keys so a retried action receives an ephemeral already-handled response instead of applying the same status update or task creation twice.

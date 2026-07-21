@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { changeTaskStatus } from '../../core/src/index.js';
+import { TaskPriority, TaskStatus, changeTaskStatus } from '../../core/src/index.js';
 
 const DEFAULT_TOLERANCE_SECONDS = 60 * 5;
 
@@ -45,6 +45,10 @@ export function handleSlackUrlVerification(payload) {
 }
 
 export function handleSlackInteraction(payload, store) {
+  if (payload?.type === 'message_action') {
+    return handleSlackMessageAction(payload, store);
+  }
+
   if (payload?.type !== 'block_actions') {
     throw validationError('SLACK_INTERACTION_UNSUPPORTED', 'Unsupported Slack interaction type.');
   }
@@ -79,6 +83,46 @@ export function handleSlackInteraction(payload, store) {
   return {
     response_type: 'ephemeral',
     text: `OwnerOps updated ${updated.id} to ${updated.status}.`
+  };
+}
+
+export function handleSlackMessageAction(payload, store) {
+  if (payload.callback_id !== 'ownerops_turn_message_into_task') {
+    throw validationError('SLACK_SHORTCUT_UNSUPPORTED', 'Unsupported Slack shortcut.');
+  }
+
+  const workspace = findWorkspaceBySlackTeam(store, payload.team?.id);
+  authorizeSlackWorkspace(payload, workspace);
+
+  const sourceReference = slackMessageSourceReference(payload);
+  const idempotencyKey = [
+    payload.team?.id || 'unknown_team',
+    payload.user?.id || 'unknown_user',
+    payload.callback_id,
+    sourceReference
+  ].join(':');
+
+  if (store.hasProcessedSlackAction(idempotencyKey)) {
+    return {
+      response_type: 'ephemeral',
+      text: 'OwnerOps already handled this Slack action.'
+    };
+  }
+
+  const existing = store.findTaskBySource(workspace.id, 'slack_message', sourceReference);
+  if (existing) {
+    store.markProcessedSlackAction(idempotencyKey);
+    return {
+      response_type: 'ephemeral',
+      text: `OwnerOps already has ${existing.id} for this Slack message.`
+    };
+  }
+
+  const task = store.createTask(slackMessageToTask(payload, workspace.id, sourceReference));
+  store.markProcessedSlackAction(idempotencyKey);
+  return {
+    response_type: 'ephemeral',
+    text: `OwnerOps created ${task.id} from Slack.`
   };
 }
 
@@ -118,6 +162,60 @@ function authorizeSlackWorkspace(payload, workspace) {
     error.statusCode = 403;
     throw error;
   }
+}
+
+function findWorkspaceBySlackTeam(store, slackTeamId) {
+  const workspace = store.findWorkspaceBySlackTeam?.(slackTeamId);
+  if (!workspace) {
+    const error = validationError('SLACK_WORKSPACE_NOT_FOUND', 'No OwnerOps workspace is mapped to this Slack team.');
+    error.statusCode = 404;
+    throw error;
+  }
+  return workspace;
+}
+
+function slackMessageToTask(payload, workspaceId, sourceReference) {
+  const message = payload.message || {};
+  const channelId = cleanRequired(payload.channel?.id, 'channelId');
+  const messageTs = cleanRequired(message.ts, 'message.ts');
+  const messageText = cleanRequired(message.text, 'message.text');
+  const taskId = `task_from_slack_${sanitizeIdPart(channelId)}_${sanitizeIdPart(messageTs)}`;
+  return {
+    id: taskId,
+    workspaceId,
+    title: firstLine(messageText),
+    description: messageText,
+    desiredOutcome: `Requested outcome: ${firstLine(messageText)}`,
+    sourceType: 'slack_message',
+    sourceReference,
+    sourceUrl: message.permalink || '',
+    createdBy: `slack:${payload.user?.id || 'unknown'}`,
+    ownerId: 'unassigned',
+    requestedBy: `slack:${message.user || payload.user?.id || 'unknown'}`,
+    status: TaskStatus.READY,
+    priority: inferPriority(messageText),
+    tags: ['slack']
+  };
+}
+
+function slackMessageSourceReference(payload) {
+  return [
+    cleanRequired(payload.team?.id, 'team.id'),
+    cleanRequired(payload.channel?.id, 'channel.id'),
+    cleanRequired(payload.message?.ts, 'message.ts')
+  ].join(':');
+}
+
+function inferPriority(text) {
+  return /urgent|today|asap|blocked|blocking/i.test(text) ? TaskPriority.HIGH : TaskPriority.NORMAL;
+}
+
+function firstLine(text) {
+  return String(text || '').trim().split(/\r?\n/)[0].slice(0, 120);
+}
+
+function sanitizeIdPart(value) {
+  return String(value || '').replace(/[^A-Za-z0-9]+/g, '').slice(0, 80);
 }
 
 function constantTimeEqual(left, right) {

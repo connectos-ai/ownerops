@@ -92,6 +92,52 @@ test('slack interaction updates canonical task status and is idempotent for retr
   }
 });
 
+test('slack message shortcut creates canonical task with source metadata and duplicate protection', async () => {
+  const app = createOwnerOpsServer({ slackSigningSecret: signingSecret });
+  const server = app.listen(0);
+  await onceListening(server);
+  const baseUrl = `http://127.0.0.1:${server.address().port}`;
+
+  try {
+    await requestJson(baseUrl, 'POST', '/api/workspaces', {
+      id: 'workspace_demo',
+      name: 'Demo Team',
+      policies: { slackTeamId: 'T_DEMO' }
+    });
+
+    const payload = {
+      type: 'message_action',
+      callback_id: 'ownerops_turn_message_into_task',
+      trigger_id: 'trigger_demo',
+      team: { id: 'T_DEMO' },
+      channel: { id: 'C_DEMO', name: 'ownerops-inbox' },
+      user: { id: 'U_DEMO', username: 'owner' },
+      message: {
+        type: 'message',
+        user: 'U_REQUESTER',
+        text: 'Please follow up with customer by Friday.',
+        ts: '1700000000.000300',
+        permalink: 'https://example.slack.com/archives/C_DEMO/p1700000000000300'
+      }
+    };
+    const body = new URLSearchParams({ payload: JSON.stringify(payload) }).toString();
+    const first = await signedRequest(baseUrl, '/slack/interactions', body, 'application/x-www-form-urlencoded');
+    const second = await signedRequest(baseUrl, '/slack/interactions', body, 'application/x-www-form-urlencoded');
+    const tasks = await requestJson(baseUrl, 'GET', '/api/tasks?workspaceId=workspace_demo&query=follow');
+
+    assert.equal(first.text, 'OwnerOps created task_from_slack_CDEMO_1700000000000300 from Slack.');
+    assert.equal(second.text, 'OwnerOps already handled this Slack action.');
+    assert.equal(tasks.tasks.length, 1);
+    assert.equal(tasks.tasks[0].sourceType, 'slack_message');
+    assert.equal(tasks.tasks[0].sourceReference, 'T_DEMO:C_DEMO:1700000000.000300');
+    assert.equal(tasks.tasks[0].sourceUrl, 'https://example.slack.com/archives/C_DEMO/p1700000000000300');
+    assert.equal(tasks.tasks[0].requestedBy, 'slack:U_REQUESTER');
+    assert.match(tasks.tasks[0].desiredOutcome, /follow up/i);
+  } finally {
+    await closeServer(server);
+  }
+});
+
 test('slack interaction rejects cross-workspace team mismatch', async () => {
   const app = createOwnerOpsServer({ slackSigningSecret: signingSecret });
   const server = app.listen(0);

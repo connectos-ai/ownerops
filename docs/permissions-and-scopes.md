@@ -4,7 +4,7 @@ OwnerOps should request the least Slack permissions needed for the installed mod
 
 ## Current Public Candidate
 
-The current implemented Slack slice verifies signed requests and handles one incoming interaction. It does not yet call Slack Web API methods, so it does not yet require bot-token scopes for the tested local slice.
+The current implemented Slack slice verifies signed requests, handles one message shortcut, and handles one status action. It does not yet call Slack Web API methods, so it does not yet require bot-token scopes for the tested local slice.
 
 ## Future Enhanced Slack App Scopes
 

@@ -144,6 +144,11 @@ export class InMemoryOwnerOpsStore {
     return workspace;
   }
 
+  findWorkspaceBySlackTeam(slackTeamId) {
+    if (!slackTeamId) return null;
+    return [...this.workspaces.values()].find((workspace) => workspace.policies?.slackTeamId === slackTeamId) || null;
+  }
+
   snapshot() {
     return {
       version: STORE_VERSION,
