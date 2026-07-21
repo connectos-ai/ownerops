@@ -90,7 +90,7 @@ OwnerOps can run from the local JSON store for development and trials. Productio
 
 The schema is workspace-scoped, covers the canonical task system and Slack installation state, and requires encrypted credential records instead of plaintext integration secrets. The relational path has migration and transaction tests for task writes, Slack idempotency, and triage approvals.
 
-HTTP API wiring for async relational storage plus database backup and restore procedures are still pending, so the public release gate remains `FAIL`.
+The REST API now awaits async store operations when an async store is supplied. Default database-backed server runtime selection plus database backup and restore procedures are still pending, so the public release gate remains `FAIL`.
 
 ## Standalone Web Boundary
 

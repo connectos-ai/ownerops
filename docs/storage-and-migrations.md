@@ -55,6 +55,6 @@ Current relational store coverage includes:
 
 Before public release gate can pass, OwnerOps still needs:
 
-- HTTP API wiring for async relational storage.
+- Default database-backed server runtime selection.
 - Database backup restore documentation and restore-test.
 - Hosted CI evidence schema checks run cleanly.

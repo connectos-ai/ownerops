@@ -44,4 +44,4 @@ Run relational migrations:
 DATABASE_URL=postgres://ownerops:change-me@localhost:5432/ownerops npm run db:migrate
 ```
 
-Production self-hosting still needs HTTP API wiring for relational storage plus database backup/restore procedures before public release `PASS`.
+Production self-hosting still needs default database-backed server runtime selection plus database backup/restore procedures before public release `PASS`.

@@ -101,6 +101,39 @@ test('relational store persists task lifecycle graph transactionally', async () 
   assert.deepEqual(afterRollback.comments.map((comment) => comment.id), ['comment_review']);
 });
 
+test('relational store supports idempotent workspace setup records', async () => {
+  const client = new MemorySqlClient();
+  const store = new RelationalOwnerOpsStore({ client });
+
+  await store.createWorkspace({ id: 'workspace_setup', name: 'Setup Team' });
+  const owner = await store.addWorkspaceUser('workspace_setup', {
+    id: 'user_owner',
+    displayName: 'Owner'
+  });
+  const duplicateOwner = await store.addWorkspaceUser('workspace_setup', {
+    id: 'user_owner',
+    displayName: 'Owner'
+  });
+  const project = await store.createProject('workspace_setup', {
+    id: 'project_ops',
+    name: 'Operations',
+    ownerId: 'user_owner'
+  });
+  const list = await store.createTaskList('workspace_setup', {
+    id: 'list_today',
+    name: 'Today',
+    projectId: project.id
+  });
+  const workspace = await store.requireWorkspace('workspace_setup');
+
+  assert.equal(owner.id, duplicateOwner.id);
+  assert.deepEqual(workspace.users.map((user) => user.id), ['user_owner']);
+  assert.deepEqual(workspace.projects.map((item) => item.id), ['project_ops']);
+  assert.deepEqual(workspace.lists.map((item) => item.id), ['list_today']);
+  assert.equal(workspace.lists[0].projectId, 'project_ops');
+  assert.equal(list.sortOrder, 0);
+});
+
 test('relational store supports Slack idempotency and triage approval duplicate protection', async () => {
   const client = new MemorySqlClient();
   const store = new RelationalOwnerOpsStore({ client });
@@ -157,6 +190,9 @@ class MemorySqlClient {
     this.tables = {
       migrations: [],
       workspaces: new Map(),
+      users: [],
+      projects: [],
+      lists: [],
       tasks: new Map(),
       comments: [],
       subtasks: [],
@@ -205,9 +241,62 @@ class MemorySqlClient {
     if (normalized.startsWith('select * from workspaces')) {
       return { rows: rowArray(this.tables.workspaces.get(params[0])) };
     }
-    if (normalized.startsWith('select * from workspace_users')) return { rows: [] };
-    if (normalized.startsWith('select * from projects')) return { rows: [] };
-    if (normalized.startsWith('select * from task_lists')) return { rows: [] };
+    if (normalized.startsWith('insert into workspace_users')) {
+      if (!this.tables.users.some((row) => row.workspace_id === params[1] && row.id === params[0])) {
+        this.tables.users.push({
+          id: params[0],
+          workspace_id: params[1],
+          display_name: params[2],
+          role: params[3],
+          status: params[4],
+          slack_user_id: params[5],
+          email_hash: params[6],
+          external_ids: params[7],
+          created_at: params[8],
+          updated_at: params[9]
+        });
+      }
+      return { rows: [] };
+    }
+    if (normalized.startsWith('select * from workspace_users')) {
+      return { rows: this.tables.users.filter((row) => row.workspace_id === params[0]) };
+    }
+    if (normalized.startsWith('insert into projects')) {
+      if (!this.tables.projects.some((row) => row.workspace_id === params[1] && row.id === params[0])) {
+        this.tables.projects.push({
+          id: params[0],
+          workspace_id: params[1],
+          name: params[2],
+          description: params[3],
+          owner_id: params[4],
+          status: params[5],
+          created_at: params[6],
+          updated_at: params[7]
+        });
+      }
+      return { rows: [] };
+    }
+    if (normalized.startsWith('select * from projects')) {
+      return { rows: this.tables.projects.filter((row) => row.workspace_id === params[0]) };
+    }
+    if (normalized.startsWith('insert into task_lists')) {
+      if (!this.tables.lists.some((row) => row.workspace_id === params[1] && row.id === params[0])) {
+        this.tables.lists.push({
+          id: params[0],
+          workspace_id: params[1],
+          project_id: params[2],
+          name: params[3],
+          description: params[4],
+          sort_order: params[5],
+          created_at: params[6],
+          updated_at: params[7]
+        });
+      }
+      return { rows: [] };
+    }
+    if (normalized.startsWith('select * from task_lists')) {
+      return { rows: this.tables.lists.filter((row) => row.workspace_id === params[0]) };
+    }
 
     if (normalized.startsWith('insert into tasks')) {
       const row = taskRow(params);
@@ -394,6 +483,9 @@ function cloneTables(tables) {
   return {
     migrations: tables.migrations.map((row) => ({ ...row })),
     workspaces: new Map([...tables.workspaces.entries()].map(([key, value]) => [key, { ...value }])),
+    users: tables.users.map((row) => ({ ...row })),
+    projects: tables.projects.map((row) => ({ ...row })),
+    lists: tables.lists.map((row) => ({ ...row })),
     tasks: new Map([...tables.tasks.entries()].map(([key, value]) => [key, { ...value }])),
     comments: tables.comments.map((row) => ({ ...row })),
     subtasks: tables.subtasks.map((row) => ({ ...row })),

@@ -115,7 +115,7 @@ async function route({ method, url, body, rawBody, headers, store, slackSigningS
 
   if (method === 'GET' && url.pathname === '/slack/oauth/start') {
     const workspaceId = requiredQuery(url, 'workspaceId');
-    store.requireWorkspace(workspaceId);
+    await store.requireWorkspace(workspaceId);
     const state = createSlackOAuthState({
       workspaceId,
       redirectUri: slackOAuth.redirectUri,
@@ -167,7 +167,7 @@ async function route({ method, url, body, rawBody, headers, store, slackSigningS
   }
 
   if (method === 'POST' && url.pathname === '/api/slack/messages') {
-    store.requireWorkspace(body.workspaceId);
+    await store.requireWorkspace(body.workspaceId);
     return {
       body: await sendSlackMessageFromInstallation({
         store,
@@ -183,66 +183,66 @@ async function route({ method, url, body, rawBody, headers, store, slackSigningS
   }
 
   if (method === 'POST' && url.pathname === '/api/workspaces') {
-    return { status: 201, body: store.createWorkspace(body) };
+    return { status: 201, body: await store.createWorkspace(body) };
   }
 
   const workspaceGetMatch = url.pathname.match(/^\/api\/workspaces\/([^/]+)$/);
   if (method === 'GET' && workspaceGetMatch) {
-    return { body: store.requireWorkspace(workspaceGetMatch[1]) };
+    return { body: await store.requireWorkspace(workspaceGetMatch[1]) };
   }
 
   const workspaceUserMatch = url.pathname.match(/^\/api\/workspaces\/([^/]+)\/users$/);
   if (method === 'POST' && workspaceUserMatch) {
-    return { status: 201, body: store.addWorkspaceUser(workspaceUserMatch[1], body) };
+    return { status: 201, body: await store.addWorkspaceUser(workspaceUserMatch[1], body) };
   }
 
   const workspaceProjectMatch = url.pathname.match(/^\/api\/workspaces\/([^/]+)\/projects$/);
   if (method === 'POST' && workspaceProjectMatch) {
-    return { status: 201, body: store.createProject(workspaceProjectMatch[1], body) };
+    return { status: 201, body: await store.createProject(workspaceProjectMatch[1], body) };
   }
 
   const workspaceListMatch = url.pathname.match(/^\/api\/workspaces\/([^/]+)\/lists$/);
   if (method === 'POST' && workspaceListMatch) {
-    return { status: 201, body: store.createTaskList(workspaceListMatch[1], body) };
+    return { status: 201, body: await store.createTaskList(workspaceListMatch[1], body) };
   }
 
   if (method === 'POST' && url.pathname === '/api/tasks') {
-    store.requireWorkspace(body.workspaceId);
-    return { status: 201, body: store.createTask(body) };
+    await store.requireWorkspace(body.workspaceId);
+    return { status: 201, body: await store.createTask(body) };
   }
 
   if (method === 'GET' && url.pathname === '/api/tasks') {
     const workspaceId = requiredQuery(url, 'workspaceId');
-    store.requireWorkspace(workspaceId);
-    return { body: { tasks: store.listTasks(workspaceId, queryFilters(url)) } };
+    await store.requireWorkspace(workspaceId);
+    return { body: { tasks: await store.listTasks(workspaceId, queryFilters(url)) } };
   }
 
   const taskUpdateMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)$/);
   if (method === 'PATCH' && taskUpdateMatch) {
-    const task = store.getTask(body.workspaceId, taskUpdateMatch[1]);
+    const task = await store.getTask(body.workspaceId, taskUpdateMatch[1]);
     const updated = updateTaskDetails(task, body);
-    return { body: store.updateTask(updated) };
+    return { body: await store.updateTask(updated) };
   }
 
   const taskStatusMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/status$/);
   if (method === 'PATCH' && taskStatusMatch) {
-    const task = store.getTask(body.workspaceId, taskStatusMatch[1]);
+    const task = await store.getTask(body.workspaceId, taskStatusMatch[1]);
     const updated = changeTaskStatus(task, body.status, body);
-    return { body: store.updateTask(updated) };
+    return { body: await store.updateTask(updated) };
   }
 
   const taskAssignMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/assign$/);
   if (method === 'PATCH' && taskAssignMatch) {
-    const task = store.getTask(body.workspaceId, taskAssignMatch[1]);
+    const task = await store.getTask(body.workspaceId, taskAssignMatch[1]);
     const updated = assignTask(task, body.ownerId, body);
-    return { body: store.updateTask(updated) };
+    return { body: await store.updateTask(updated) };
   }
 
   const taskCommentMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/comments$/);
   if (method === 'POST' && taskCommentMatch) {
     return {
       status: 201,
-      body: store.addTaskComment(body.workspaceId, taskCommentMatch[1], body)
+      body: await store.addTaskComment(body.workspaceId, taskCommentMatch[1], body)
     };
   }
 
@@ -250,62 +250,62 @@ async function route({ method, url, body, rawBody, headers, store, slackSigningS
   if (method === 'POST' && taskSubtaskMatch) {
     return {
       status: 201,
-      body: store.addSubtask(body.workspaceId, taskSubtaskMatch[1], body)
+      body: await store.addSubtask(body.workspaceId, taskSubtaskMatch[1], body)
     };
   }
 
   const subtaskStatusMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/subtasks\/([^/]+)\/status$/);
   if (method === 'PATCH' && subtaskStatusMatch) {
-    const task = store.getTask(body.workspaceId, subtaskStatusMatch[1]);
+    const task = await store.getTask(body.workspaceId, subtaskStatusMatch[1]);
     const updated = changeSubtaskStatus(task, subtaskStatusMatch[2], body.status, body);
-    return { body: store.updateTask(updated) };
+    return { body: await store.updateTask(updated) };
   }
 
   const taskArchiveMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/archive$/);
   if (method === 'POST' && taskArchiveMatch) {
-    return { body: store.archiveTask(body.workspaceId, taskArchiveMatch[1], body) };
+    return { body: await store.archiveTask(body.workspaceId, taskArchiveMatch[1], body) };
   }
 
   const taskReopenMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/reopen$/);
   if (method === 'POST' && taskReopenMatch) {
-    return { body: store.reopenTask(body.workspaceId, taskReopenMatch[1], body) };
+    return { body: await store.reopenTask(body.workspaceId, taskReopenMatch[1], body) };
   }
 
   const recurringMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/recurring-instance$/);
   if (method === 'POST' && recurringMatch) {
-    const task = store.getTask(body.workspaceId, recurringMatch[1]);
-    return { status: 201, body: store.createTask(createRecurringTaskInstance(task, body)) };
+    const task = await store.getTask(body.workspaceId, recurringMatch[1]);
+    return { status: 201, body: await store.createTask(createRecurringTaskInstance(task, body)) };
   }
 
   const ownerDecisionMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/owner-decision$/);
   if (method === 'POST' && ownerDecisionMatch) {
-    const task = store.getTask(body.workspaceId, ownerDecisionMatch[1]);
+    const task = await store.getTask(body.workspaceId, ownerDecisionMatch[1]);
     const updated = requestOwnerDecision(task, body);
-    return { body: store.updateTask(updated) };
+    return { body: await store.updateTask(updated) };
   }
 
   const ownerDecisionResolveMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/owner-decision\/resolve$/);
   if (method === 'POST' && ownerDecisionResolveMatch) {
-    const task = store.getTask(body.workspaceId, ownerDecisionResolveMatch[1]);
+    const task = await store.getTask(body.workspaceId, ownerDecisionResolveMatch[1]);
     const updated = resolveOwnerDecision(task, body);
-    return { body: store.updateTask(updated) };
+    return { body: await store.updateTask(updated) };
   }
 
   if (method === 'GET' && url.pathname === '/api/boards/kanban') {
     const workspaceId = requiredQuery(url, 'workspaceId');
-    store.requireWorkspace(workspaceId);
-    return { body: groupTasksForKanban(store.listTasks(workspaceId, queryFilters(url))) };
+    await store.requireWorkspace(workspaceId);
+    return { body: groupTasksForKanban(await store.listTasks(workspaceId, queryFilters(url))) };
   }
 
   if (method === 'POST' && url.pathname === '/api/triage/email') {
-    store.requireWorkspace(body.workspaceId);
+    await store.requireWorkspace(body.workspaceId);
     const suggestion = triageEmailToTaskSuggestion(body.email, body);
-    return { status: 201, body: store.saveSuggestion(suggestion) };
+    return { status: 201, body: await store.saveSuggestion(suggestion) };
   }
 
   const suggestionApproveMatch = url.pathname.match(/^\/api\/triage\/suggestions\/([^/]+)\/approve$/);
   if (method === 'POST' && suggestionApproveMatch) {
-    const suggestion = store.getSuggestion(body.workspaceId, suggestionApproveMatch[1]);
+    const suggestion = await store.getSuggestion(body.workspaceId, suggestionApproveMatch[1]);
     const task = await approveSuggestedTask(suggestion, {
       createTask: (item) => store.createTaskFromSuggestion(item)
     }, body);
@@ -314,16 +314,16 @@ async function route({ method, url, body, rawBody, headers, store, slackSigningS
 
   if (method === 'GET' && url.pathname === '/api/briefs/daily') {
     const workspaceId = requiredQuery(url, 'workspaceId');
-    store.requireWorkspace(workspaceId);
+    await store.requireWorkspace(workspaceId);
     return {
-      body: generateDailyBrief(store.allTasks(workspaceId), { now: url.searchParams.get('now') || undefined })
+      body: generateDailyBrief(await store.allTasks(workspaceId), { now: url.searchParams.get('now') || undefined })
     };
   }
 
   if (method === 'GET' && url.pathname === '/api/briefs/weekly') {
     const workspaceId = requiredQuery(url, 'workspaceId');
-    store.requireWorkspace(workspaceId);
-    return { body: generateWeeklyReview(store.allTasks(workspaceId)) };
+    await store.requireWorkspace(workspaceId);
+    return { body: generateWeeklyReview(await store.allTasks(workspaceId)) };
   }
 
   throw notFound('ROUTE_NOT_FOUND', 'Route not found.');
@@ -342,7 +342,7 @@ async function handleSlackOAuthCallback({ url, store, slackOAuth }) {
     state,
     stateSecret: slackOAuth.stateSecret
   });
-  store.requireWorkspace(payload.workspaceId);
+  await store.requireWorkspace(payload.workspaceId);
   if (payload.redirectUri !== slackOAuth.redirectUri) {
     const error = new Error('Slack OAuth redirect URI mismatch.');
     error.statusCode = 400;
@@ -359,7 +359,7 @@ async function handleSlackOAuthCallback({ url, store, slackOAuth }) {
     workspaceId: payload.workspaceId,
     tokenEncryptionKey: slackOAuth.tokenEncryptionKey
   });
-  store.saveSlackInstallation(installation);
+  await store.saveSlackInstallation(installation);
   return {
     body: {
       ok: true,

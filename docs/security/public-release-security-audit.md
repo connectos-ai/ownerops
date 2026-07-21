@@ -6,7 +6,7 @@ Status: FAIL
 
 ## Reason
 
-This public repository candidate includes standalone task management, static standalone web task manager with workspace/member/project/list setup, deterministic triage, mock email-to-task approval, Kanban grouping, daily/weekly briefs, signed Slack interactions, OAuth installation with encrypted token storage, outgoing Slack messages, modal task creation, App Home publishing, documented relational schema boundary, relational adapter, and migration runner tests. Local CI configuration and dependency audit commands now exist. It does not yet include the complete working OwnerOps product, HTTP API wiring for async relational storage, database backup/restore procedures, complete browser/accessibility verification, GitHub-hosted CI evidence, git-history audit report, or full secret/privacy scan evidence required for public release.
+This public repository candidate includes standalone task management, static standalone web task manager with workspace/member/project/list setup, deterministic triage, mock email-to-task approval, Kanban grouping, daily/weekly briefs, signed Slack interactions, OAuth installation with encrypted token storage, outgoing Slack messages, modal task creation, App Home publishing, documented relational schema boundary, relational adapter, migration runner tests, and REST API async-store compatibility. Local CI configuration and dependency audit commands now exist. It does not yet include the complete working OwnerOps product, default database-backed server runtime selection, database backup/restore procedures, complete browser/accessibility verification, GitHub-hosted CI evidence, git-history audit report, or full secret/privacy scan evidence required for public release.
 
 Do not publish yet.
 

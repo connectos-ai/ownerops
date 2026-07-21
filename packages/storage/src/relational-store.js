@@ -1,8 +1,11 @@
 import {
+  addWorkspaceUser,
   addSubtask,
   addTaskComment,
   archiveTask,
+  createProject,
   createTask,
+  createTaskList,
   createWorkspace,
   reopenTask,
   searchTasks
@@ -116,12 +119,88 @@ export class RelationalOwnerOpsStore {
     return workspace;
   }
 
+  async addWorkspaceUser(workspaceId, input) {
+    const workspace = await this.requireWorkspace(workspaceId);
+    const existing = workspace.users.find((user) => user.id === input?.id);
+    if (existing) return existing;
+    const user = addWorkspaceUser(workspace, input);
+    await this.client.query(
+      `INSERT INTO workspace_users
+       (id, workspace_id, display_name, role, status, slack_user_id, email_hash, external_ids, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       ON CONFLICT (workspace_id, id) DO NOTHING`,
+      [
+        user.id,
+        workspaceId,
+        user.displayName,
+        user.role,
+        user.status,
+        user.slackUserId || '',
+        user.emailHash || '',
+        toJson(user.externalIds || {}),
+        user.createdAt,
+        user.updatedAt
+      ]
+    );
+    return user;
+  }
+
+  async createProject(workspaceId, input) {
+    const workspace = await this.requireWorkspace(workspaceId);
+    const existing = workspace.projects.find((project) => project.id === input?.id);
+    if (existing) return existing;
+    const project = createProject(workspace, input);
+    await this.client.query(
+      `INSERT INTO projects (id, workspace_id, name, description, owner_id, status, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       ON CONFLICT (workspace_id, id) DO NOTHING`,
+      [
+        project.id,
+        workspaceId,
+        project.name,
+        project.description || '',
+        project.ownerId || null,
+        project.status,
+        project.createdAt,
+        project.updatedAt
+      ]
+    );
+    return project;
+  }
+
+  async createTaskList(workspaceId, input) {
+    const workspace = await this.requireWorkspace(workspaceId);
+    const existing = workspace.lists.find((list) => list.id === input?.id);
+    if (existing) return existing;
+    const list = createTaskList(workspace, input);
+    await this.client.query(
+      `INSERT INTO task_lists (id, workspace_id, project_id, name, description, sort_order, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       ON CONFLICT (workspace_id, id) DO NOTHING`,
+      [
+        list.id,
+        workspaceId,
+        list.projectId || null,
+        list.name,
+        list.description || '',
+        list.sortOrder || 0,
+        list.createdAt,
+        list.updatedAt
+      ]
+    );
+    return list;
+  }
+
   async createTask(input) {
     await this.requireWorkspace(input.workspaceId);
     const existing = await this.findTaskBySource(input.workspaceId, input.sourceType, input.sourceReference);
     if (existing) return existing;
     const task = createTask(input);
     return this.updateTask(task);
+  }
+
+  async createTaskFromSuggestion(task) {
+    return this.createTask(task);
   }
 
   async updateTask(task) {
