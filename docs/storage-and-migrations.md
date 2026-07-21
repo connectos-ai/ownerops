@@ -1,12 +1,15 @@
 # Storage And Migrations
 
-OwnerOps currently ships with a portable JSON file store for local development and small self-hosted trials. The production persistence boundary is now defined as versioned PostgreSQL-compatible migration SQL in `packages/storage/src/relational-schema.js`.
+OwnerOps ships two storage paths:
 
-This boundary is intentionally not a required database service yet. It documents the production shape that future adapters and migration runners must honor while keeping the public repo useful without Docker, cloud services, DoBoth, ConnectOS, Slack, email, or AI.
+- Portable JSON file store for local development and small self-hosted trials.
+- PostgreSQL-compatible relational storage for production deployments.
+
+The production persistence shape is defined as versioned SQL migrations in `packages/storage/src/relational-schema.js`. The runtime adapter and migration runner live in `packages/storage/src/relational-store.js`, with optional PostgreSQL wiring in `packages/storage/src/postgres.js`.
 
 ## Current Boundary
 
-The relational schema covers:
+The relational schema and adapter cover:
 
 - Schema migration tracking.
 - Workspaces and workspace users.
@@ -16,22 +19,42 @@ The relational schema covers:
 - Slack action idempotency.
 - Slack installations with encrypted credential records only.
 
-Every task-facing table is workspace-scoped. Indexes are defined for common workspace filters such as status, owner, due date, project, list, task history, triage status, Slack actions, and Slack installations.
+Every task-facing table is workspace-scoped. Indexes are defined for common workspace filters: status, owner, due date, project, list, task history, triage status, Slack actions, and Slack installations.
+
+## Migration Runner
+
+Run migrations against a PostgreSQL-compatible database:
+
+```bash
+DATABASE_URL=postgres://ownerops:change-me@localhost:5432/ownerops npm run db:migrate
+```
+
+The runner creates the migration tracking table first, applies only pending migrations, runs inside a transaction, records each applied version, and rolls back if a migration fails.
+
+## Relational Store
+
+`RelationalOwnerOpsStore` accepts an injected SQL client with a `query(sql, params)` method and optional `connect()` or `transaction(fn)` support. This keeps the core storage boundary testable without requiring contributors to run PostgreSQL for every local test.
+
+Current relational store coverage includes:
+
+- Workspace creation and loading.
+- Task create, update, list, source-reference lookup, comments, subtasks, archive, and reopen.
+- Triage suggestion save/load and email-to-task duplicate protection by source reference.
+- Slack action idempotency persistence.
+- Transactional task graph writes so child rows roll back with parent task update.
 
 ## Security Rules
 
 - Do not add plaintext token columns.
-- Store integration credentials as encrypted records, not as raw OAuth or signing secret fields.
+- Store integration credentials as encrypted records, not raw OAuth or signing secret fields.
 - Keep tenant isolation explicit with `workspace_id`.
-- Keep source references unique per workspace when they are present.
+- Keep source references unique per workspace when present.
 - Do not commit database dumps, runtime data, backups, logs, or `.env` files.
 
 ## Pending Production Work
 
-Before the public release gate can pass, OwnerOps still needs:
+Before public release gate can pass, OwnerOps still needs:
 
-- A production database adapter.
-- A migration runner.
-- Transaction tests for task writes, Slack idempotency, and triage approvals.
-- Database backup and restore documentation with a restore-test.
-- Hosted CI evidence that the schema checks run cleanly.
+- HTTP API wiring for async relational storage.
+- Database backup restore documentation and restore-test.
+- Hosted CI evidence schema checks run cleanly.

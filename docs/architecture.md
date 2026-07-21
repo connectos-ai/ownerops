@@ -6,15 +6,16 @@ OwnerOps is a standalone owner-operator work system with optional integrations.
 
 ```text
 apps/
-  api/       HTTP API, webhooks, Slack request handlers
-  web/       Standalone task manager and Kanban UI
-  worker/    Scheduler, reminders, briefs, background work
+  api/      HTTP API, webhooks, Slack request handlers
+  web/      Standalone task manager and Kanban UI
+  worker/   Scheduler, reminders, briefs, background work
+
 packages/
-  core/      Domain models, policies, events
-  triage/    Work detection, owner-decision filter, summaries
-  storage/   Development storage and future database boundary
-  slack/     Slack signing, payload parsing, interaction handlers
-  adapters/  Slack, email, AI, task destination, ConnectOS ports
+  core/     Domain models, policies, events
+  triage/   Work detection, owner-decision filter, summaries
+  storage/  JSON store, relational adapter, migrations
+  slack/    Slack signing, payload parsing, interaction handlers
+  adapters/ Slack, email, AI, task destination, ConnectOS ports
 ```
 
 The domain layer must not depend on Slack SDK objects, Gmail API objects, DoBoth code, or ConnectOS code.
@@ -23,12 +24,12 @@ The domain layer must not depend on Slack SDK objects, Gmail API objects, DoBoth
 
 OwnerOps must start providing value without:
 
-- Slack
-- Email
-- AI
-- DoBoth
-- ConnectOS
-- Paid Slack features
+- Slack.
+- Email.
+- AI.
+- DoBoth.
+- ConnectOS.
+- Paid Slack features.
 
 Integrations add capabilities. They do not define the core product.
 
@@ -36,11 +37,11 @@ Integrations add capabilities. They do not define the core product.
 
 DoBoth and ConnectOS can integrate through the same public interfaces available to anyone:
 
-- REST APIs
-- Webhooks
-- Domain events
-- Adapter interfaces
-- Public examples
+- REST APIs.
+- Webhooks.
+- Domain events.
+- Adapter interfaces.
+- Public examples.
 
 There are no private DoBoth backdoors and no hidden ConnectOS dependency.
 
@@ -85,72 +86,51 @@ Slack request verification and interaction parsing live in `packages/slack`. The
 
 ## Storage Boundary
 
-OwnerOps can run from the local JSON store for development and trials. The production persistence shape is defined by versioned SQL migrations in `packages/storage/src/relational-schema.js`. That schema is workspace-scoped, covers the canonical task system and Slack installation state, and requires encrypted credential records instead of plaintext integration secrets.
+OwnerOps can run from the local JSON store for development and trials. Production persistence uses versioned SQL migrations in `packages/storage/src/relational-schema.js`, the async relational store in `packages/storage/src/relational-store.js`, and optional PostgreSQL wiring in `packages/storage/src/postgres.js`.
 
-The database adapter and migration runner are still pending. Until they exist and pass transaction, backup, and restore tests, the public release gate remains `FAIL`.
+The schema is workspace-scoped, covers the canonical task system and Slack installation state, and requires encrypted credential records instead of plaintext integration secrets. The relational path has migration and transaction tests for task writes, Slack idempotency, and triage approvals.
+
+HTTP API wiring for async relational storage plus database backup and restore procedures are still pending, so the public release gate remains `FAIL`.
 
 ## Standalone Web Boundary
 
-API server serves static web task manager from `apps/web`. It supports workspace setup, team members, projects, lists, manual task capture, owner assignment, priority due date entry, search, filtered views, summary counts, Kanban status moves through public API. It is dependency-free so new contributor can run OwnerOps locally without separate frontend build.
+The API server serves a static web task manager from `apps/web`. It supports workspace setup, team members, projects, lists, manual task capture, owner assignment, priority and due date entry, search, filtered views, summary counts, and Kanban status moves through public API. It is dependency-free so a new contributor can run OwnerOps locally without a separate frontend build.
 
 ## Canonical Data Model
 
 OwnerOps keeps a canonical task model even when tasks are mirrored into Slack. Minimum task fields:
 
-- `id`
-- `workspaceId`
-- `title`
-- `description`
-- `desiredOutcome`
-- `sourceType`
-- `sourceReference`
-- `sourceUrl`
-- `createdBy`
-- `ownerId`
-- `requestedBy`
-- `collaborators`
-- `status`
-- `priority`
-- `dueAt`
-- `startAt`
-- `completedAt`
-- `blockedReason`
-- `waitingOn`
-- `projectId`
-- `tags`
-- `ownerDecisionRequired`
-- `ownerDecisionReason`
-- `confidence`
-- `createdAt`
-- `updatedAt`
-- `version`
+- `id`.
+- `workspaceId`.
+- `title`.
+- `description`.
+- `desiredOutcome`.
+- `sourceType`.
+- `sourceReference`.
+- `sourceUrl`.
+- `createdBy`.
+- `ownerId`.
+- `requestedBy`.
+- `collaborators`.
+- `status`.
+- `priority`.
+- `dueAt`.
+- `startAt`.
+- `completedAt`.
+- `blockedReason`.
+- `waitingOn`.
+- `projectId`.
+- `tags`.
+- `ownerDecisionRequired`.
+- `ownerDecisionReason`.
+- `confidence`.
+- `createdAt`.
+- `updatedAt`.
+- `version`.
 
 ## Domain Events
 
-Events are versioned, workspace-scoped, idempotent, and privacy-conscious.
-
-Required event families:
-
-- `task.created`
-- `task.updated`
-- `task.assigned`
-- `task.reassigned`
-- `task.status_changed`
-- `task.blocked`
-- `task.waiting`
-- `task.completed`
-- `task.reopened`
-- `task.overdue`
-- `task.owner_decision_requested`
-- `task.owner_decision_resolved`
-- `triage.item_received`
-- `triage.work_detected`
-- `triage.task_suggested`
-- `triage.task_approved`
-- `triage.task_rejected`
-- `brief.generated`
-
-Example:
+Events are versioned, workspace-scoped, idempotent, and suitable for optional webhooks or future DoBoth orchestration.
 
 ```json
 {

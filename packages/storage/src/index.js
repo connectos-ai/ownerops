@@ -22,6 +22,8 @@ export {
   getRelationalSchemaSql,
   validateRelationalSchema
 } from './relational-schema.js';
+export { RelationalOwnerOpsStore, applyOwnerOpsMigrations, withOwnerOpsTransaction } from './relational-store.js';
+export { createPostgresOwnerOpsStore } from './postgres.js';
 
 const STORE_VERSION = 1;
 

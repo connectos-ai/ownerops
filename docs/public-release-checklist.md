@@ -7,7 +7,7 @@ OwnerOps may not be published until every item is complete.
 - [ ] Standalone task manager works without Slack, email, AI, DoBoth, or ConnectOS.
 - [x] Static standalone web app served by local API.
 - [x] Workspace, member, project, and list setup available in standalone web app.
-- [x] Relational schema boundary documented without requiring database service.
+- [x] Relational schema, adapter, and migration runner documented without requiring database service for local JSON use.
 - [ ] Slack Free native templates usable manually.
 - [ ] Slack paid templates are documented accurately.
 - [ ] Enhanced Slack app mode is optional.
@@ -25,6 +25,7 @@ OwnerOps may not be published until every item is complete.
 - [ ] No real personal, client, church, Slack, Gmail, machine details.
 - [ ] No secrets secret-shaped values.
 - [ ] Dependency audit reviewed.
+- [ ] Database backup/restore procedure reviewed.
 - [ ] `docs/security/public-release-security-audit.md` says `PASS`.
 
 ## Quality

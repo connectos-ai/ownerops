@@ -1,0 +1,404 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  RelationalOwnerOpsStore,
+  applyOwnerOpsMigrations
+} from '../packages/storage/src/index.js';
+import { approveSuggestedTask, triageEmailToTaskSuggestion } from '../packages/triage/src/index.js';
+
+test('migration runner applies pending migrations once and records versions', async () => {
+  const client = new MemorySqlClient();
+
+  const first = await applyOwnerOpsMigrations(client, {
+    migrations: [
+      { version: 1, name: 'create_example', sql: 'CREATE TABLE IF NOT EXISTS example_one (id TEXT)' },
+      { version: 2, name: 'add_example_index', sql: 'CREATE INDEX IF NOT EXISTS idx_example_one ON example_one (id)' }
+    ]
+  });
+  const second = await applyOwnerOpsMigrations(client, {
+    migrations: [
+      { version: 1, name: 'create_example', sql: 'CREATE TABLE IF NOT EXISTS example_one (id TEXT)' },
+      { version: 2, name: 'add_example_index', sql: 'CREATE INDEX IF NOT EXISTS idx_example_one ON example_one (id)' }
+    ]
+  });
+
+  assert.deepEqual(first.appliedVersions, [1, 2]);
+  assert.deepEqual(second.appliedVersions, [1, 2]);
+  assert.equal(client.sqlCount('CREATE TABLE IF NOT EXISTS example_one'), 1);
+  assert.equal(client.sqlCount('CREATE INDEX IF NOT EXISTS idx_example_one'), 1);
+});
+
+test('migration runner rolls back failed migration on plain SQL clients', async () => {
+  const client = new RecordingSqlClient({ failOn: /BROKEN MIGRATION/ });
+
+  await assert.rejects(
+    () => applyOwnerOpsMigrations(client, {
+      migrations: [{ version: 1, name: 'broken_migration', sql: 'BROKEN MIGRATION' }]
+    }),
+    /forced sql failure/
+  );
+
+  assert.deepEqual(client.statements, [
+    'BEGIN',
+    'CREATE TABLE IF NOT EXISTS ownerops_schema_migrations',
+    'SELECT version FROM ownerops_schema_migrations ORDER BY version',
+    'BROKEN MIGRATION',
+    'ROLLBACK'
+  ]);
+});
+
+test('relational store persists task lifecycle graph transactionally', async () => {
+  const client = new MemorySqlClient();
+  const store = new RelationalOwnerOpsStore({ client });
+
+  await store.createWorkspace({ id: 'workspace_demo', name: 'Demo Team' });
+  const task = await store.createTask({
+    id: 'task_launch',
+    workspaceId: 'workspace_demo',
+    title: 'Prepare launch review',
+    createdBy: 'user_owner',
+    ownerId: 'user_ops',
+    sourceType: 'email',
+    sourceReference: 'email_demo_001',
+    tags: ['launch']
+  });
+
+  await store.addTaskComment('workspace_demo', task.id, {
+    id: 'comment_review',
+    authorId: 'user_owner',
+    body: 'Keep the review short.'
+  });
+  await store.addSubtask('workspace_demo', task.id, {
+    id: 'subtask_outline',
+    title: 'Write outline',
+    ownerId: 'user_ops'
+  });
+  await store.archiveTask('workspace_demo', task.id, { actorId: 'user_owner' });
+
+  const activeOnly = await store.listTasks('workspace_demo');
+  const archived = await store.listTasks('workspace_demo', { includeArchived: true });
+  const fromSource = await store.findTaskBySource('workspace_demo', 'email', 'email_demo_001');
+
+  assert.deepEqual(activeOnly, []);
+  assert.equal(archived.length, 1);
+  assert.equal(archived[0].comments[0].body, 'Keep the review short.');
+  assert.equal(archived[0].subtasks[0].title, 'Write outline');
+  assert.ok(archived[0].history.some((event) => event.eventType === 'task.archived'));
+  assert.equal(fromSource.id, task.id);
+
+  client.failOn = /INSERT INTO task_comments/i;
+  await assert.rejects(
+    () => store.addTaskComment('workspace_demo', task.id, {
+      id: 'comment_should_rollback',
+      authorId: 'user_owner',
+      body: 'This write should roll back.'
+    }),
+    /forced sql failure/
+  );
+  client.failOn = null;
+
+  const afterRollback = await store.getTask('workspace_demo', task.id);
+  assert.deepEqual(afterRollback.comments.map((comment) => comment.id), ['comment_review']);
+});
+
+test('relational store supports Slack idempotency and triage approval duplicate protection', async () => {
+  const client = new MemorySqlClient();
+  const store = new RelationalOwnerOpsStore({ client });
+
+  await store.createWorkspace({ id: 'workspace_demo', name: 'Demo Team' });
+  assert.equal(await store.hasProcessedSlackAction('action_demo', { workspaceId: 'workspace_demo' }), false);
+  await store.markProcessedSlackAction('action_demo', {
+    workspaceId: 'workspace_demo',
+    payloadFingerprint: 'fingerprint_demo'
+  });
+  await store.markProcessedSlackAction('action_demo', {
+    workspaceId: 'workspace_demo',
+    payloadFingerprint: 'fingerprint_demo'
+  });
+  assert.equal(await store.hasProcessedSlackAction('action_demo', { workspaceId: 'workspace_demo' }), true);
+  assert.equal(client.tables.processedSlackActions.length, 1);
+
+  const suggestion = triageEmailToTaskSuggestion(
+    {
+      id: 'email_demo_001',
+      subject: 'Follow up needed',
+      from: 'customer@example.com',
+      receivedAt: '2026-01-01T12:00:00.000Z',
+      body: 'Please follow up with the customer by Friday.'
+    },
+    { workspaceId: 'workspace_demo', defaultOwnerId: 'user_owner' }
+  );
+
+  await store.saveSuggestion(suggestion);
+  const savedSuggestion = await store.getSuggestion('workspace_demo', suggestion.id);
+  const firstTask = await approveSuggestedTask(savedSuggestion, store, { actorId: 'user_owner' });
+  const duplicateTask = await approveSuggestedTask(savedSuggestion, store, { actorId: 'user_owner' });
+
+  assert.equal(savedSuggestion.source.messageId, 'email_demo_001');
+  assert.equal(firstTask.id, duplicateTask.id);
+  assert.equal((await store.listTasks('workspace_demo', { includeArchived: true })).length, 1);
+});
+
+class RecordingSqlClient {
+  constructor(options = {}) {
+    this.failOn = options.failOn || null;
+    this.statements = [];
+  }
+
+  async query(sql) {
+    this.statements.push(firstStatement(sql));
+    if (this.failOn?.test(sql)) throw new Error('forced sql failure');
+    return { rows: [] };
+  }
+}
+
+class MemorySqlClient {
+  constructor() {
+    this.tables = {
+      migrations: [],
+      workspaces: new Map(),
+      tasks: new Map(),
+      comments: [],
+      subtasks: [],
+      history: [],
+      suggestions: new Map(),
+      processedSlackActions: []
+    };
+    this.statements = [];
+    this.failOn = null;
+  }
+
+  async transaction(fn) {
+    const snapshot = cloneTables(this.tables);
+    try {
+      return await fn(this);
+    } catch (error) {
+      this.tables = snapshot;
+      throw error;
+    }
+  }
+
+  async query(sql, params = []) {
+    this.statements.push(firstStatement(sql));
+    if (this.failOn?.test(sql)) throw new Error('forced sql failure');
+    const normalized = normalizeSql(sql);
+
+    if (normalized.startsWith('create table') || normalized.startsWith('create index')) return { rows: [] };
+    if (normalized.startsWith('select version from ownerops_schema_migrations')) return { rows: this.tables.migrations };
+    if (normalized.startsWith('insert into ownerops_schema_migrations')) {
+      if (!this.tables.migrations.some((row) => row.version === params[0])) {
+        this.tables.migrations.push({ version: params[0], name: params[1], applied_at: params[2] });
+      }
+      return { rows: [] };
+    }
+
+    if (normalized.startsWith('insert into workspaces')) {
+      this.tables.workspaces.set(params[0], {
+        id: params[0],
+        name: params[1],
+        policies: params[2],
+        created_at: params[3],
+        updated_at: params[4]
+      });
+      return { rows: [] };
+    }
+    if (normalized.startsWith('select * from workspaces')) {
+      return { rows: rowArray(this.tables.workspaces.get(params[0])) };
+    }
+    if (normalized.startsWith('select * from workspace_users')) return { rows: [] };
+    if (normalized.startsWith('select * from projects')) return { rows: [] };
+    if (normalized.startsWith('select * from task_lists')) return { rows: [] };
+
+    if (normalized.startsWith('insert into tasks')) {
+      const row = taskRow(params);
+      this.tables.tasks.set(`${row.workspace_id}:${row.id}`, row);
+      return { rows: [] };
+    }
+    if (normalized.startsWith('select * from tasks where workspace_id = $1 and id = $2')) {
+      return { rows: rowArray(this.tables.tasks.get(`${params[0]}:${params[1]}`)) };
+    }
+    if (normalized.startsWith('select * from tasks where workspace_id = $1 and source_type = $2')) {
+      return {
+        rows: [...this.tables.tasks.values()].filter((row) => (
+          row.workspace_id === params[0]
+          && row.source_type === params[1]
+          && row.source_reference === params[2]
+        ))
+      };
+    }
+    if (normalized.startsWith('select * from tasks where workspace_id = $1')) {
+      return { rows: [...this.tables.tasks.values()].filter((row) => row.workspace_id === params[0]) };
+    }
+
+    if (normalized.startsWith('delete from task_comments')) {
+      this.tables.comments = this.tables.comments.filter((row) => row.workspace_id !== params[0] || row.task_id !== params[1]);
+      return { rows: [] };
+    }
+    if (normalized.startsWith('delete from task_subtasks')) {
+      this.tables.subtasks = this.tables.subtasks.filter((row) => row.workspace_id !== params[0] || row.task_id !== params[1]);
+      return { rows: [] };
+    }
+    if (normalized.startsWith('delete from task_history_events')) {
+      this.tables.history = this.tables.history.filter((row) => row.workspace_id !== params[0] || row.task_id !== params[1]);
+      return { rows: [] };
+    }
+    if (normalized.startsWith('insert into task_comments')) {
+      this.tables.comments.push({
+        id: params[0],
+        workspace_id: params[1],
+        task_id: params[2],
+        author_id: params[3],
+        body: params[4],
+        created_at: params[5],
+        updated_at: params[6]
+      });
+      return { rows: [] };
+    }
+    if (normalized.startsWith('insert into task_subtasks')) {
+      this.tables.subtasks.push({
+        id: params[0],
+        workspace_id: params[1],
+        task_id: params[2],
+        title: params[3],
+        status: params[4],
+        owner_id: params[5],
+        due_at: params[6],
+        completed_at: params[7],
+        created_at: params[8],
+        updated_at: params[9]
+      });
+      return { rows: [] };
+    }
+    if (normalized.startsWith('insert into task_history_events')) {
+      this.tables.history.push({
+        id: params[0],
+        workspace_id: params[1],
+        task_id: params[2],
+        event_type: params[3],
+        actor_id: params[4],
+        occurred_at: params[5],
+        payload: params[6]
+      });
+      return { rows: [] };
+    }
+    if (normalized.startsWith('select * from task_comments')) {
+      return { rows: this.tables.comments.filter((row) => row.workspace_id === params[0] && row.task_id === params[1]) };
+    }
+    if (normalized.startsWith('select * from task_subtasks')) {
+      return { rows: this.tables.subtasks.filter((row) => row.workspace_id === params[0] && row.task_id === params[1]) };
+    }
+    if (normalized.startsWith('select * from task_history_events')) {
+      return { rows: this.tables.history.filter((row) => row.workspace_id === params[0] && row.task_id === params[1]) };
+    }
+
+    if (normalized.startsWith('insert into triage_suggestions')) {
+      this.tables.suggestions.set(`${params[1]}:${params[0]}`, {
+        id: params[0],
+        workspace_id: params[1],
+        source_type: params[2],
+        source_reference: params[3],
+        subject: params[4],
+        received_at: params[5],
+        status: params[6],
+        suggested_task: params[7],
+        metadata: params[8],
+        created_at: params[9],
+        updated_at: params[10]
+      });
+      return { rows: [] };
+    }
+    if (normalized.startsWith('select * from triage_suggestions')) {
+      return { rows: rowArray(this.tables.suggestions.get(`${params[0]}:${params[1]}`)) };
+    }
+
+    if (normalized.startsWith('select action_key from processed_slack_actions')) {
+      return {
+        rows: this.tables.processedSlackActions.filter((row) => (
+          row.workspace_id === params[0] && row.action_key === params[1]
+        ))
+      };
+    }
+    if (normalized.startsWith('insert into processed_slack_actions')) {
+      const exists = this.tables.processedSlackActions.some((row) => (
+        row.workspace_id === params[0] && row.action_key === params[1]
+      ));
+      if (!exists) {
+        this.tables.processedSlackActions.push({
+          workspace_id: params[0],
+          action_key: params[1],
+          payload_fingerprint: params[2],
+          processed_at: params[3]
+        });
+      }
+      return { rows: [] };
+    }
+
+    throw new Error(`Unhandled SQL in memory client: ${sql}`);
+  }
+
+  sqlCount(fragment) {
+    return this.statements.filter((statement) => statement.includes(fragment)).length;
+  }
+}
+
+function taskRow(params) {
+  return {
+    id: params[0],
+    workspace_id: params[1],
+    title: params[2],
+    description: params[3],
+    desired_outcome: params[4],
+    notes: params[5],
+    source_type: params[6],
+    source_reference: params[7],
+    source_url: params[8],
+    created_by: params[9],
+    owner_id: params[10],
+    requested_by: params[11],
+    collaborators: params[12],
+    status: params[13],
+    priority: params[14],
+    due_at: params[15],
+    start_at: params[16],
+    completed_at: params[17],
+    blocked_reason: params[18],
+    waiting_on: params[19],
+    project_id: params[20],
+    list_id: params[21],
+    parent_task_id: params[22],
+    tags: params[23],
+    owner_decision_required: params[24],
+    owner_decision_reason: params[25],
+    confidence: params[26],
+    recurrence: params[27],
+    archived_at: params[28],
+    version: params[29],
+    created_at: params[30],
+    updated_at: params[31]
+  };
+}
+
+function rowArray(row) {
+  return row ? [row] : [];
+}
+
+function normalizeSql(sql) {
+  return String(sql).replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+function firstStatement(sql) {
+  return String(sql).replace(/\s+/g, ' ').trim().split('(')[0].trim();
+}
+
+function cloneTables(tables) {
+  return {
+    migrations: tables.migrations.map((row) => ({ ...row })),
+    workspaces: new Map([...tables.workspaces.entries()].map(([key, value]) => [key, { ...value }])),
+    tasks: new Map([...tables.tasks.entries()].map(([key, value]) => [key, { ...value }])),
+    comments: tables.comments.map((row) => ({ ...row })),
+    subtasks: tables.subtasks.map((row) => ({ ...row })),
+    history: tables.history.map((row) => ({ ...row })),
+    suggestions: new Map([...tables.suggestions.entries()].map(([key, value]) => [key, { ...value }])),
+    processedSlackActions: tables.processedSlackActions.map((row) => ({ ...row }))
+  };
+}

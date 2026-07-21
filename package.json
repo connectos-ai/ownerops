@@ -7,9 +7,13 @@
   "license": "Apache-2.0",
   "scripts": {
     "audit": "npm audit --audit-level=high",
-    "check": "node --check packages/core/src/index.js && node --check packages/triage/src/index.js && node --check packages/adapters/src/index.js && node --check packages/storage/src/index.js && node --check packages/storage/src/relational-schema.js && node --check packages/slack/src/index.js && node --check apps/api/src/server.js && node --check apps/web/app.js && bash -n scripts/backup-data.sh && bash -n scripts/restore-data.sh && bash scripts/public-release-audit.sh .",
+    "check": "node --check packages/core/src/index.js && node --check packages/triage/src/index.js && node --check packages/adapters/src/index.js && node --check packages/storage/src/index.js && node --check packages/storage/src/relational-schema.js && node --check packages/storage/src/relational-store.js && node --check packages/storage/src/postgres.js && node --check packages/slack/src/index.js && node --check apps/api/src/server.js && node --check apps/web/app.js && node --check scripts/migrate-database.js && bash -n scripts/backup-data.sh && bash -n scripts/restore-data.sh && bash scripts/public-release-audit.sh .",
     "ci": "npm run check && npm test && npm run audit",
+    "db:migrate": "node scripts/migrate-database.js",
     "test": "node --test"
+  },
+  "dependencies": {
+    "pg": "^8.13.1"
   },
   "engines": {
     "node": ">=20"
