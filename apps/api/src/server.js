@@ -20,6 +20,7 @@ import {
   handleSlackEvent,
   handleSlackInteraction,
   handleSlackUrlVerification,
+  openSlackView,
   postSlackMessage,
   parseSlackInteractionBody,
   sendSlackMessageFromInstallation,
@@ -89,6 +90,7 @@ function createSlackOAuthConfig(options) {
 function createSlackWebApiConfig(options) {
   const provided = options.slackWebApi || {};
   return {
+    openView: provided.openView || openSlackView,
     postMessage: provided.postMessage || postSlackMessage
   };
 }
@@ -138,7 +140,12 @@ async function route({ method, url, body, rawBody, headers, store, slackSigningS
 
   if (method === 'POST' && url.pathname === '/slack/commands') {
     requireValidSlackSignature({ headers, rawBody, slackSigningSecret });
-    return { body: handleSlackCommand(body, store) };
+    return {
+      body: await handleSlackCommand(body, store, {
+        tokenEncryptionKey: slackOAuth.tokenEncryptionKey,
+        openView: slackWebApi.openView
+      })
+    };
   }
 
   if (method === 'POST' && url.pathname === '/api/slack/messages') {

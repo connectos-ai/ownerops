@@ -185,13 +185,7 @@ export function decryptSlackToken(record, encryptionKey) {
 }
 
 export async function sendSlackMessageFromInstallation(input) {
-  const installation = input.store.getSlackInstallationByTeam?.(input.teamId);
-  if (!installation || installation.workspaceId !== input.workspaceId) {
-    throw slackSendError('SLACK_INSTALLATION_NOT_FOUND', 'Slack installation not found.', 404);
-  }
-  if (installation.status !== 'ACTIVE' || !installation.botToken) {
-    throw slackSendError('SLACK_INSTALLATION_INACTIVE', 'Slack installation is not active.', 409);
-  }
+  const installation = requireActiveSlackInstallation(input);
   const token = decryptSlackToken(installation.botToken, input.tokenEncryptionKey);
   const response = await input.postMessage({
     token,
@@ -211,6 +205,25 @@ export async function sendSlackMessageFromInstallation(input) {
   };
 }
 
+export async function openSlackTaskCreateModalFromInstallation(input) {
+  const installation = requireActiveSlackInstallation(input);
+  const token = decryptSlackToken(installation.botToken, input.tokenEncryptionKey);
+  const response = await input.openView({
+    token,
+    triggerId: cleanRequired(input.triggerId, 'triggerId'),
+    view: buildOwnerOpsTaskCreateView(input)
+  });
+  if (!response?.ok) {
+    throw slackSendError('SLACK_MODAL_OPEN_FAILED', response?.error || 'Slack modal open failed.', 502);
+  }
+  return {
+    ok: true,
+    teamId: installation.teamId,
+    viewId: response.view?.id || '',
+    callbackId: response.view?.callback_id || 'ownerops_task_create'
+  };
+}
+
 export async function postSlackMessage({ token, channel, text, blocks = [] }) {
   const response = await fetch('https://slack.com/api/chat.postMessage', {
     method: 'POST',
@@ -222,6 +235,120 @@ export async function postSlackMessage({ token, channel, text, blocks = [] }) {
       channel: cleanRequired(channel, 'channel'),
       text: cleanRequired(text, 'text'),
       blocks
+    })
+  });
+  return response.json();
+}
+
+function requireActiveSlackInstallation(input) {
+  const installation = input.store.getSlackInstallationByTeam?.(input.teamId);
+  if (!installation || installation.workspaceId !== input.workspaceId) {
+    throw slackSendError('SLACK_INSTALLATION_NOT_FOUND', 'Slack installation not found.', 404);
+  }
+  if (installation.status !== 'ACTIVE' || !installation.botToken) {
+    throw slackSendError('SLACK_INSTALLATION_INACTIVE', 'Slack installation is not active.', 409);
+  }
+  return installation;
+}
+
+export function buildOwnerOpsTaskCreateView(input = {}) {
+  return {
+    type: 'modal',
+    callback_id: 'ownerops_task_create',
+    private_metadata: JSON.stringify({
+      sourceType: input.sourceType || 'slack_command',
+      channelId: input.channelId || ''
+    }),
+    title: {
+      type: 'plain_text',
+      text: 'OwnerOps Task'
+    },
+    submit: {
+      type: 'plain_text',
+      text: 'Create'
+    },
+    close: {
+      type: 'plain_text',
+      text: 'Cancel'
+    },
+    blocks: [
+      {
+        type: 'input',
+        block_id: 'title_block',
+        label: {
+          type: 'plain_text',
+          text: 'Task'
+        },
+        element: {
+          type: 'plain_text_input',
+          action_id: 'title_action',
+          placeholder: {
+            type: 'plain_text',
+            text: 'Follow up with customer'
+          }
+        }
+      },
+      {
+        type: 'input',
+        block_id: 'description_block',
+        optional: true,
+        label: {
+          type: 'plain_text',
+          text: 'Details'
+        },
+        element: {
+          type: 'plain_text_input',
+          action_id: 'description_action',
+          multiline: true
+        }
+      },
+      {
+        type: 'input',
+        block_id: 'due_date_block',
+        optional: true,
+        label: {
+          type: 'plain_text',
+          text: 'Due date'
+        },
+        element: {
+          type: 'datepicker',
+          action_id: 'due_date_action'
+        }
+      },
+      {
+        type: 'input',
+        block_id: 'priority_block',
+        optional: true,
+        label: {
+          type: 'plain_text',
+          text: 'Priority'
+        },
+        element: {
+          type: 'static_select',
+          action_id: 'priority_action',
+          options: ['LOW', 'NORMAL', 'HIGH', 'CRITICAL'].map((priority) => ({
+            text: {
+              type: 'plain_text',
+              text: priority
+            },
+            value: priority
+          }))
+        }
+      }
+    ]
+  };
+}
+
+export async function openSlackView({ token, triggerId, view }) {
+  const response = await fetch('https://slack.com/api/views.open', {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${cleanRequired(token, 'token')}`,
+      'content-type': 'application/json; charset=utf-8'
+    },
+    body: JSON.stringify({
+      trigger_id: cleanRequired(triggerId, 'triggerId'),
+      view
     })
   });
   return response.json();
@@ -273,10 +400,27 @@ export function handleSlackInteraction(payload, store) {
   };
 }
 
-export function handleSlackCommand(body, store) {
+export async function handleSlackCommand(body, store, options = {}) {
   const command = cleanRequired(body.command, 'command');
   const text = cleanRequired(body.text, 'text');
   const workspace = findWorkspaceBySlackTeam(store, body.team_id);
+
+  if (/^(new|create|modal)$/i.test(text)) {
+    await openSlackTaskCreateModalFromInstallation({
+      store,
+      workspaceId: workspace.id,
+      teamId: body.team_id,
+      triggerId: body.trigger_id,
+      channelId: body.channel_id,
+      tokenEncryptionKey: options.tokenEncryptionKey,
+      openView: options.openView
+    });
+    return {
+      response_type: 'ephemeral',
+      text: 'OwnerOps opened the task creation modal.'
+    };
+  }
+
   const taskText = parseOwnerOpsCommandText(text);
   const sourceReference = [
     cleanRequired(body.team_id, 'team_id'),

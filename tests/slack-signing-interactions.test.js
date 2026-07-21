@@ -539,6 +539,73 @@ test('slack message send decrypts token only at send time', async () => {
   }
 });
 
+test('slack slash command opens task creation modal from installation', async () => {
+  let capturedToken = '';
+  let capturedView = null;
+  let capturedTriggerId = '';
+  const app = createOwnerOpsServer({
+    slackSigningSecret: signingSecret,
+    slackOAuth: {
+      clientId: 'client_demo',
+      clientSecret: 'client_demo_private',
+      redirectUri: 'https://ownerops.example/slack/oauth/callback',
+      stateSecret: 'state_secret_demo',
+      tokenEncryptionKey: 'local_encryption_key_for_tests',
+      exchangeOAuthCode: async () => ({
+        ok: true,
+        access_token: 'bot_token_demo',
+        scope: 'commands,chat:write',
+        team: { id: 'T_DEMO', name: 'Demo Team' },
+        bot_user_id: 'B_DEMO'
+      })
+    },
+    slackWebApi: {
+      openView: async ({ token, triggerId, view }) => {
+        capturedToken = token;
+        capturedTriggerId = triggerId;
+        capturedView = view;
+        return { ok: true, view: { id: 'V_OPENED', callback_id: view.callback_id } };
+      }
+    }
+  });
+  const server = app.listen(0);
+  await onceListening(server);
+  const baseUrl = `http://127.0.0.1:${server.address().port}`;
+
+  try {
+    await requestJson(baseUrl, 'POST', '/api/workspaces', {
+      id: 'workspace_demo',
+      name: 'Demo Team',
+      policies: { slackTeamId: 'T_DEMO' }
+    });
+    const start = await requestJson(baseUrl, 'GET', '/slack/oauth/start?workspaceId=workspace_demo');
+    const state = new URL(start.authorizeUrl).searchParams.get('state');
+    await requestJson(baseUrl, 'GET', `/slack/oauth/callback?code=code_demo&state=${encodeURIComponent(state)}`);
+
+    const commandBody = new URLSearchParams({
+      team_id: 'T_DEMO',
+      channel_id: 'C_DEMO',
+      user_id: 'U_DEMO',
+      command: '/ownerops',
+      text: 'new',
+      trigger_id: 'trigger_demo'
+    }).toString();
+    const response = await signedRequest(baseUrl, '/slack/commands', commandBody, 'application/x-www-form-urlencoded');
+    const snapshotText = JSON.stringify(app.ownerOpsStore.snapshot());
+
+    assert.equal(response.response_type, 'ephemeral');
+    assert.equal(response.text, 'OwnerOps opened the task creation modal.');
+    assert.equal(capturedToken, 'bot_token_demo');
+    assert.equal(capturedTriggerId, 'trigger_demo');
+    assert.equal(capturedView.type, 'modal');
+    assert.equal(capturedView.callback_id, 'ownerops_task_create');
+    assert.equal(capturedView.private_metadata, JSON.stringify({ sourceType: 'slack_command', channelId: 'C_DEMO' }));
+    assert.equal(snapshotText.includes('bot_token_demo'), false);
+  } finally {
+    await closeServer(server);
+  }
+});
+
 async function signedRequest(baseUrl, path, body, contentType) {
   const response = await signedFetch(baseUrl, path, body, contentType);
   const data = await response.json();

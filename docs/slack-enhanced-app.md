@@ -14,6 +14,7 @@ The current public candidate implements:
 - Encrypted Slack installation token storage.
 - Signed uninstall and token-revoked event handling.
 - Outgoing Slack message sending through `chat.postMessage`.
+- Task creation modal opening through `views.open`.
 - Message shortcut handling for `ownerops_turn_message_into_task`.
 - Slash command task creation with `/ownerops task <task title>`.
 - Modal submission task creation with `view.callback_id: "ownerops_task_create"`.
@@ -21,7 +22,7 @@ The current public candidate implements:
 - Idempotency for retried Slack actions.
 - Optional Slack team-to-OwnerOps workspace scoping using `workspace.policies.slackTeamId`.
 
-The current slice does not yet implement App Home or opening modals through Slack Web API.
+The current slice does not yet implement App Home.
 
 ## OAuth Installation
 
@@ -81,6 +82,25 @@ Request body:
 OwnerOps finds the active Slack installation for the team, verifies it belongs to the requested OwnerOps workspace, decrypts the bot token only for the Web API call, and posts through Slack `chat.postMessage`. The API response returns non-secret send metadata such as `channel` and `ts`; it does not return tokens.
 
 Reference: https://docs.slack.dev/reference/methods/chat.postMessage
+
+## Task Creation Modal
+
+Slash command:
+
+```text
+/ownerops new
+```
+
+OwnerOps finds the active Slack installation for the command's team, verifies it belongs to the mapped OwnerOps workspace, decrypts the bot token only for the Web API call, and opens the task creation modal through Slack `views.open` using the command `trigger_id`.
+
+The opened modal uses `callback_id: "ownerops_task_create"` and field IDs that match the `view_submission` parser:
+
+- `title_block` / `title_action`
+- `description_block` / `description_action`
+- `due_date_block` / `due_date_action`
+- `priority_block` / `priority_action`
+
+Reference: https://docs.slack.dev/reference/methods/views.open
 
 ## Request Verification
 
