@@ -59,6 +59,7 @@ This repository is being prepared as a public open-source release candidate. Do 
 The first public release will include a runnable local quickstart. Until then, see:
 
 - `docs/architecture.md`
+- `docs/api.md`
 - `docs/task-system.md`
 - `docs/email-triage.md`
 - `docs/slack-native-starter-guide.md`
