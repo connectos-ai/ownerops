@@ -1,4 +1,7 @@
 import http from 'node:http';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   assignTask,
   changeSubtaskStatus,
@@ -53,7 +56,7 @@ export function createOwnerOpsServer(options = {}) {
         slackOAuth,
         slackWebApi
       });
-      sendJson(res, result.status || 200, result.body);
+      sendResponse(res, result);
     } catch (error) {
       sendJson(res, error.statusCode || 500, {
         error: {
@@ -98,6 +101,14 @@ function createSlackWebApiConfig(options) {
 }
 
 async function route({ method, url, body, rawBody, headers, store, slackSigningSecret, slackOAuth, slackWebApi }) {
+  if (method === 'GET' && url.pathname === '/favicon.ico') {
+    return { status: 204, body: '', contentType: 'image/x-icon' };
+  }
+
+  if (method === 'GET' && ['/','/app.js','/styles.css'].includes(url.pathname)) {
+    return staticWebAsset(url.pathname);
+  }
+
   if (method === 'GET' && url.pathname === '/healthz') {
     return { body: { ok: true, service: 'ownerops-api' } };
   }
@@ -413,6 +424,30 @@ function parseCsv(value) {
 function sendJson(res, status, body) {
   res.writeHead(status, { 'content-type': 'application/json; charset=utf-8' });
   res.end(JSON.stringify(body));
+}
+
+function sendResponse(res, result) {
+  if (result.contentType) {
+    res.writeHead(result.status || 200, { 'content-type': result.contentType });
+    res.end(result.body);
+    return;
+  }
+  sendJson(res, result.status || 200, result.body);
+}
+
+function staticWebAsset(pathname) {
+  const assets = {
+    '/': { fileName: 'index.html', contentType: 'text/html; charset=utf-8' },
+    '/app.js': { fileName: 'app.js', contentType: 'text/javascript; charset=utf-8' },
+    '/styles.css': { fileName: 'styles.css', contentType: 'text/css; charset=utf-8' }
+  };
+  const asset = assets[pathname];
+  if (!asset) throw notFound('ROUTE_NOT_FOUND', 'Route not found.');
+  const webRoot = join(dirname(fileURLToPath(import.meta.url)), '../../web');
+  return {
+    body: readFileSync(join(webRoot, asset.fileName), 'utf8'),
+    contentType: asset.contentType
+  };
 }
 
 function requiredQuery(url, name) {

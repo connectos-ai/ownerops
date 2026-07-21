@@ -89,6 +89,10 @@ OwnerOps can run from the local JSON store for development and trials. The produ
 
 The database adapter and migration runner are still pending. Until they exist and pass transaction, backup, and restore tests, the public release gate remains `FAIL`.
 
+## Standalone Web Boundary
+
+API server serves static web task manager from `apps/web`. It supports manual task capture, owner assignment, priority due date entry, search, filtered views, summary counts, Kanban status moves through public API. It is dependency-free so new contributor can run OwnerOps locally without separate frontend build.
+
 ## Canonical Data Model
 
 OwnerOps keeps a canonical task model even when tasks are mirrored into Slack. Minimum task fields:

@@ -10,6 +10,8 @@ Run with a project-relative JSON data file:
 OWNEROPS_PORT=3100 OWNEROPS_DATA_FILE=data/ownerops.json node apps/api/src/server.js
 ```
 
+Open standalone task manager at `http://localhost:3100/`. web app uses same local API and does not require Slack, email, AI, DoBoth, or ConnectOS.
+
 The `data/` directory is intentionally ignored by git. Do not commit runtime data, backups, logs, database dumps, or environment files.
 
 ## Back Up Data

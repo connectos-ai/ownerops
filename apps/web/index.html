@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OwnerOps</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">Standalone task manager</p>
+        <h1>OwnerOps</h1>
+      </div>
+      <div class="header-actions">
+        <button type="button" class="refresh-button" data-refresh>Refresh</button>
+      </div>
+    </header>
+
+    <main class="app-shell">
+      <section class="task-entry" aria-labelledby="create-task-title">
+        <div class="section-heading">
+          <h2 id="create-task-title">Create Task</h2>
+          <p>Capture work with one accountable owner and a clear next action.</p>
+        </div>
+        <form id="task-form" autocomplete="off">
+          <label>
+            Task
+            <input id="task-title" name="title" required maxlength="140" placeholder="Follow up with customer" />
+          </label>
+          <label>
+            Owner
+            <select id="task-owner" name="ownerId">
+              <option value="user_owner">Owner</option>
+              <option value="user_ops">Ops Lead</option>
+              <option value="unassigned">Unassigned</option>
+            </select>
+          </label>
+          <label>
+            Priority
+            <select id="task-priority" name="priority">
+              <option value="NORMAL">Normal</option>
+              <option value="HIGH">High</option>
+              <option value="CRITICAL">Critical</option>
+              <option value="LOW">Low</option>
+            </select>
+          </label>
+          <label>
+            Due
+            <input id="task-due" name="dueAt" type="date" />
+          </label>
+          <label class="wide-field">
+            Next action
+            <textarea id="task-description" name="description" rows="3" maxlength="500" placeholder="What should happen next?"></textarea>
+          </label>
+          <button type="submit">Create</button>
+        </form>
+      </section>
+
+      <section class="toolbar" aria-label="Task views">
+        <button type="button" class="tab is-active" data-filter="all">All</button>
+        <button type="button" class="tab" data-filter="today">Today</button>
+        <button type="button" class="tab" data-filter="waiting">Waiting</button>
+        <button type="button" class="tab" data-filter="blocked">Blocked</button>
+        <button type="button" class="tab" data-filter="owner">Needs Owner</button>
+        <label class="search-field">
+          <span>Search</span>
+          <input id="task-search" type="search" placeholder="Task, owner, tag" />
+        </label>
+      </section>
+
+      <section class="summary-strip" aria-label="Operating summary">
+        <div><strong id="count-open">0</strong><span>Open</span></div>
+        <div><strong id="count-due">0</strong><span>Due today</span></div>
+        <div><strong id="count-blocked">0</strong><span>Blocked</span></div>
+        <div><strong id="count-owner">0</strong><span>Owner decisions</span></div>
+      </section>
+
+      <section class="task-board" data-view="kanban" aria-labelledby="board-title">
+        <div class="section-heading">
+          <h2 id="board-title">Kanban</h2>
+          <p>Move work from inbox to done without Slack, email, AI, DoBoth, or ConnectOS.</p>
+        </div>
+        <div id="board-columns" class="board-columns" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <template id="task-card-template">
+      <article class="task-card">
+        <div class="task-card-header">
+          <h3></h3>
+          <span class="priority"></span>
+        </div>
+        <p class="task-description"></p>
+        <dl>
+          <div><dt>Owner</dt><dd class="task-owner"></dd></div>
+          <div><dt>Due</dt><dd class="task-due"></dd></div>
+        </dl>
+        <div class="task-actions">
+          <button type="button" data-action="READY">Ready</button>
+          <button type="button" data-action="IN_PROGRESS">Start</button>
+          <button type="button" data-action="WAITING">Waiting</button>
+          <button type="button" data-action="BLOCKED">Blocked</button>
+          <button type="button" data-action="DONE">Done</button>
+        </div>
+      </article>
+    </template>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
