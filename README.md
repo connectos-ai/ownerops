@@ -69,12 +69,15 @@ Start the standalone API:
 OWNEROPS_PORT=3100 node apps/api/src/server.js
 ```
 
+For local persistence, add `OWNEROPS_DATA_FILE=data/ownerops.json`.
+
 Then visit `http://localhost:3100/healthz`.
 
 See:
 
 - `docs/architecture.md`
 - `docs/api.md`
+- `docs/self-hosting.md`
 - `docs/task-system.md`
 - `docs/email-triage.md`
 - `docs/slack-native-starter-guide.md`

@@ -10,6 +10,12 @@ npm run check
 OWNEROPS_PORT=3100 node apps/api/src/server.js
 ```
 
+For local persistence, add `OWNEROPS_DATA_FILE`:
+
+```bash
+OWNEROPS_PORT=3100 OWNEROPS_DATA_FILE=data/ownerops.json node apps/api/src/server.js
+```
+
 Then open:
 
 ```text

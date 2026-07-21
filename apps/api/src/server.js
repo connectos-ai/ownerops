@@ -1,30 +1,23 @@
 import http from 'node:http';
 import {
-  addSubtask,
-  addTaskComment,
-  addWorkspaceUser,
-  archiveTask,
   assignTask,
   changeSubtaskStatus,
   changeTaskStatus,
-  createProject,
   createRecurringTaskInstance,
-  createTask,
-  createTaskList,
-  createWorkspace,
   generateDailyBrief,
   generateWeeklyReview,
   groupTasksForKanban,
-  reopenTask,
   requestOwnerDecision,
   resolveOwnerDecision,
-  searchTasks,
   updateTaskDetails
 } from '../../../packages/core/src/index.js';
+import { FileOwnerOpsStore, InMemoryOwnerOpsStore } from '../../../packages/storage/src/index.js';
 import { approveSuggestedTask, triageEmailToTaskSuggestion } from '../../../packages/triage/src/index.js';
 
+export { FileOwnerOpsStore, InMemoryOwnerOpsStore };
+
 export function createOwnerOpsServer(options = {}) {
-  const store = options.store || new InMemoryOwnerOpsStore();
+  const store = options.store || createDefaultStore(options);
 
   return http.createServer(async (req, res) => {
     try {
@@ -43,93 +36,11 @@ export function createOwnerOpsServer(options = {}) {
   });
 }
 
-export class InMemoryOwnerOpsStore {
-  constructor() {
-    this.workspaces = new Map();
-    this.tasks = new Map();
-    this.suggestions = new Map();
+function createDefaultStore(options) {
+  if (options.filePath || process.env.OWNEROPS_DATA_FILE) {
+    return new FileOwnerOpsStore({ filePath: options.filePath || process.env.OWNEROPS_DATA_FILE });
   }
-
-  createWorkspace(input) {
-    const workspace = createWorkspace(input);
-    this.workspaces.set(workspace.id, workspace);
-    return workspace;
-  }
-
-  addWorkspaceUser(workspaceId, input) {
-    const workspace = this.requireWorkspace(workspaceId);
-    return addWorkspaceUser(workspace, input);
-  }
-
-  createProject(workspaceId, input) {
-    const workspace = this.requireWorkspace(workspaceId);
-    return createProject(workspace, input);
-  }
-
-  createTaskList(workspaceId, input) {
-    const workspace = this.requireWorkspace(workspaceId);
-    return createTaskList(workspace, input);
-  }
-
-  createTask(input) {
-    const existing = this.findTaskBySource(input.workspaceId, input.sourceType, input.sourceReference);
-    if (existing) return existing;
-    const task = createTask(input);
-    this.tasks.set(task.id, task);
-    return task;
-  }
-
-  createTaskFromSuggestion(task) {
-    return this.createTask(task);
-  }
-
-  getTask(workspaceId, taskId) {
-    const task = this.tasks.get(taskId);
-    if (!task || task.workspaceId !== workspaceId) throw notFound('TASK_NOT_FOUND', 'Task not found.');
-    return task;
-  }
-
-  updateTask(task) {
-    this.tasks.set(task.id, task);
-    return task;
-  }
-
-  saveSuggestion(suggestion) {
-    this.suggestions.set(suggestion.id, suggestion);
-    return suggestion;
-  }
-
-  getSuggestion(workspaceId, suggestionId) {
-    const suggestion = this.suggestions.get(suggestionId);
-    const suggestionWorkspaceId = suggestion?.workspaceId || suggestion?.task?.workspaceId;
-    if (!suggestion || suggestionWorkspaceId !== workspaceId) {
-      throw notFound('SUGGESTION_NOT_FOUND', 'Suggestion not found.');
-    }
-    return suggestion;
-  }
-
-  listTasks(workspaceId, filters = {}) {
-    return searchTasks([...this.tasks.values()], { ...filters, workspaceId });
-  }
-
-  allTasks(workspaceId) {
-    return [...this.tasks.values()].filter((task) => task.workspaceId === workspaceId);
-  }
-
-  findTaskBySource(workspaceId, sourceType, sourceReference) {
-    if (!sourceReference) return null;
-    return [...this.tasks.values()].find((task) => (
-      task.workspaceId === workspaceId
-      && task.sourceType === sourceType
-      && task.sourceReference === sourceReference
-    )) || null;
-  }
-
-  requireWorkspace(workspaceId) {
-    const workspace = this.workspaces.get(workspaceId);
-    if (!workspace) throw notFound('WORKSPACE_NOT_FOUND', 'Workspace not found.');
-    return workspace;
-  }
+  return new InMemoryOwnerOpsStore();
 }
 
 async function route({ method, url, body, store }) {
@@ -190,16 +101,18 @@ async function route({ method, url, body, store }) {
 
   const taskCommentMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/comments$/);
   if (method === 'POST' && taskCommentMatch) {
-    const task = store.getTask(body.workspaceId, taskCommentMatch[1]);
-    const updated = addTaskComment(task, body);
-    return { status: 201, body: store.updateTask(updated) };
+    return {
+      status: 201,
+      body: store.addTaskComment(body.workspaceId, taskCommentMatch[1], body)
+    };
   }
 
   const taskSubtaskMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/subtasks$/);
   if (method === 'POST' && taskSubtaskMatch) {
-    const task = store.getTask(body.workspaceId, taskSubtaskMatch[1]);
-    const updated = addSubtask(task, body);
-    return { status: 201, body: store.updateTask(updated) };
+    return {
+      status: 201,
+      body: store.addSubtask(body.workspaceId, taskSubtaskMatch[1], body)
+    };
   }
 
   const subtaskStatusMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/subtasks\/([^/]+)\/status$/);
@@ -211,14 +124,12 @@ async function route({ method, url, body, store }) {
 
   const taskArchiveMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/archive$/);
   if (method === 'POST' && taskArchiveMatch) {
-    const task = store.getTask(body.workspaceId, taskArchiveMatch[1]);
-    return { body: store.updateTask(archiveTask(task, body)) };
+    return { body: store.archiveTask(body.workspaceId, taskArchiveMatch[1], body) };
   }
 
   const taskReopenMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/reopen$/);
   if (method === 'POST' && taskReopenMatch) {
-    const task = store.getTask(body.workspaceId, taskReopenMatch[1]);
-    return { body: store.updateTask(reopenTask(task, body)) };
+    return { body: store.reopenTask(body.workspaceId, taskReopenMatch[1], body) };
   }
 
   const recurringMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/recurring-instance$/);
