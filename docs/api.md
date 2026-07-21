@@ -22,10 +22,19 @@ http://localhost:3100/healthz
 GET    /healthz
 POST   /api/workspaces
 POST   /api/workspaces/:workspaceId/users
+POST   /api/workspaces/:workspaceId/projects
+POST   /api/workspaces/:workspaceId/lists
 POST   /api/tasks
 GET    /api/tasks?workspaceId=:workspaceId
+PATCH  /api/tasks/:taskId
 PATCH  /api/tasks/:taskId/status
 PATCH  /api/tasks/:taskId/assign
+POST   /api/tasks/:taskId/comments
+POST   /api/tasks/:taskId/subtasks
+PATCH  /api/tasks/:taskId/subtasks/:subtaskId/status
+POST   /api/tasks/:taskId/archive
+POST   /api/tasks/:taskId/reopen
+POST   /api/tasks/:taskId/recurring-instance
 POST   /api/tasks/:taskId/owner-decision
 POST   /api/tasks/:taskId/owner-decision/resolve
 GET    /api/boards/kanban?workspaceId=:workspaceId
@@ -34,6 +43,8 @@ POST   /api/triage/suggestions/:suggestionId/approve
 GET    /api/briefs/daily?workspaceId=:workspaceId&now=:isoTimestamp
 GET    /api/briefs/weekly?workspaceId=:workspaceId
 ```
+
+Task list routes support these filters: `query`, `ownerId`, `projectId`, `listId`, `status`, `tag`, `dueBefore`, `dueAfter`, and `includeArchived=true`.
 
 ## Example Flow
 
@@ -59,6 +70,14 @@ Create a task:
 curl -sS http://localhost:3100/api/tasks \
   -H 'content-type: application/json' \
   -d '{"workspaceId":"workspace_demo","title":"Prepare launch checklist","createdBy":"user_owner","ownerId":"user_owner"}'
+```
+
+Add a comment:
+
+```bash
+curl -sS http://localhost:3100/api/tasks/task_example/comments \
+  -H 'content-type: application/json' \
+  -d '{"workspaceId":"workspace_demo","authorId":"user_owner","body":"Waiting on final date."}'
 ```
 
 View the Kanban board:

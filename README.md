@@ -1,6 +1,6 @@
 # OwnerOps
 
-OwnerOps is an open-source owner-operator triage and task system. It helps owners, leaders, managers, pastors, and small teams turn communication into clear work: what needs to be done, who owns it, what is blocked, what is waiting, and what truly needs the owner.
+OwnerOps is an open-source owner-operator triage task system. It helps owners, leaders, managers, pastors, and small teams turn communication into clear work: what needs to be done, who owns it, what is blocked, what is waiting, and what truly needs the owner.
 
 OwnerOps is designed to work independently. It does not require DoBoth, ConnectOS, Slack, email, or an AI model to be useful. Those capabilities can be connected later through documented adapters.
 
@@ -18,7 +18,7 @@ OwnerOps is designed to work independently. It does not require DoBoth, ConnectO
 
 ### Level 1: Standalone Task Manager
 
-Use OwnerOps without Slack, email, AI, DoBoth, or ConnectOS. Create tasks manually, assign work, move tasks through a Kanban board, and review daily or weekly status.
+Use OwnerOps without Slack, email, AI, DoBoth, or ConnectOS. Create projects, lists, tasks, comments, subtasks, assignments, due dates, recurring task instances, archived tasks, Kanban boards, daily briefs, and weekly reviews.
 
 ### Level 2: Slack-Native OwnerOps
 
@@ -44,7 +44,7 @@ OwnerOps must remain useful when DoBoth and ConnectOS are disconnected.
 
 ## Slack-Native Task Options
 
-- Free Slack: use the Slack Free starter templates in `templates/slack-free/`.
+- Free Slack: use Slack Free starter templates in `templates/slack-free/`.
 - Paid Slack: use Slack Lists, Workflow Builder, and canvas templates in `templates/slack-paid/`.
 - Enhanced Slack app: use OwnerOps app integrations when you want automation.
 
@@ -56,7 +56,22 @@ This repository is being prepared as a public open-source release candidate. Do 
 
 ## Quickstart
 
-The first public release will include a runnable local quickstart. Until then, see:
+Run the current local checks:
+
+```bash
+npm test
+npm run check
+```
+
+Start the standalone API:
+
+```bash
+OWNEROPS_PORT=3100 node apps/api/src/server.js
+```
+
+Then visit `http://localhost:3100/healthz`.
+
+See:
 
 - `docs/architecture.md`
 - `docs/api.md`

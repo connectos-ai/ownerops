@@ -1,15 +1,25 @@
 import http from 'node:http';
 import {
+  addSubtask,
+  addTaskComment,
   addWorkspaceUser,
+  archiveTask,
   assignTask,
+  changeSubtaskStatus,
   changeTaskStatus,
+  createProject,
+  createRecurringTaskInstance,
   createTask,
+  createTaskList,
   createWorkspace,
   generateDailyBrief,
   generateWeeklyReview,
   groupTasksForKanban,
+  reopenTask,
   requestOwnerDecision,
-  resolveOwnerDecision
+  resolveOwnerDecision,
+  searchTasks,
+  updateTaskDetails
 } from '../../../packages/core/src/index.js';
 import { approveSuggestedTask, triageEmailToTaskSuggestion } from '../../../packages/triage/src/index.js';
 
@@ -51,12 +61,26 @@ export class InMemoryOwnerOpsStore {
     return addWorkspaceUser(workspace, input);
   }
 
+  createProject(workspaceId, input) {
+    const workspace = this.requireWorkspace(workspaceId);
+    return createProject(workspace, input);
+  }
+
+  createTaskList(workspaceId, input) {
+    const workspace = this.requireWorkspace(workspaceId);
+    return createTaskList(workspace, input);
+  }
+
   createTask(input) {
     const existing = this.findTaskBySource(input.workspaceId, input.sourceType, input.sourceReference);
     if (existing) return existing;
     const task = createTask(input);
     this.tasks.set(task.id, task);
     return task;
+  }
+
+  createTaskFromSuggestion(task) {
+    return this.createTask(task);
   }
 
   getTask(workspaceId, taskId) {
@@ -70,10 +94,6 @@ export class InMemoryOwnerOpsStore {
     return task;
   }
 
-  listTasks(workspaceId) {
-    return [...this.tasks.values()].filter((task) => task.workspaceId === workspaceId);
-  }
-
   saveSuggestion(suggestion) {
     this.suggestions.set(suggestion.id, suggestion);
     return suggestion;
@@ -81,16 +101,19 @@ export class InMemoryOwnerOpsStore {
 
   getSuggestion(workspaceId, suggestionId) {
     const suggestion = this.suggestions.get(suggestionId);
-    if (!suggestion || suggestion.task.workspaceId !== workspaceId) throw notFound('SUGGESTION_NOT_FOUND', 'Suggestion not found.');
+    const suggestionWorkspaceId = suggestion?.workspaceId || suggestion?.task?.workspaceId;
+    if (!suggestion || suggestionWorkspaceId !== workspaceId) {
+      throw notFound('SUGGESTION_NOT_FOUND', 'Suggestion not found.');
+    }
     return suggestion;
   }
 
-  async createTaskFromSuggestion(task) {
-    return this.createTask(task);
+  listTasks(workspaceId, filters = {}) {
+    return searchTasks([...this.tasks.values()], { ...filters, workspaceId });
   }
 
-  async listTasksForDestination() {
-    return [...this.tasks.values()];
+  allTasks(workspaceId) {
+    return [...this.tasks.values()].filter((task) => task.workspaceId === workspaceId);
   }
 
   findTaskBySource(workspaceId, sourceType, sourceReference) {
@@ -123,6 +146,16 @@ async function route({ method, url, body, store }) {
     return { status: 201, body: store.addWorkspaceUser(workspaceUserMatch[1], body) };
   }
 
+  const workspaceProjectMatch = url.pathname.match(/^\/api\/workspaces\/([^/]+)\/projects$/);
+  if (method === 'POST' && workspaceProjectMatch) {
+    return { status: 201, body: store.createProject(workspaceProjectMatch[1], body) };
+  }
+
+  const workspaceListMatch = url.pathname.match(/^\/api\/workspaces\/([^/]+)\/lists$/);
+  if (method === 'POST' && workspaceListMatch) {
+    return { status: 201, body: store.createTaskList(workspaceListMatch[1], body) };
+  }
+
   if (method === 'POST' && url.pathname === '/api/tasks') {
     store.requireWorkspace(body.workspaceId);
     return { status: 201, body: store.createTask(body) };
@@ -131,7 +164,14 @@ async function route({ method, url, body, store }) {
   if (method === 'GET' && url.pathname === '/api/tasks') {
     const workspaceId = requiredQuery(url, 'workspaceId');
     store.requireWorkspace(workspaceId);
-    return { body: { tasks: store.listTasks(workspaceId) } };
+    return { body: { tasks: store.listTasks(workspaceId, queryFilters(url)) } };
+  }
+
+  const taskUpdateMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)$/);
+  if (method === 'PATCH' && taskUpdateMatch) {
+    const task = store.getTask(body.workspaceId, taskUpdateMatch[1]);
+    const updated = updateTaskDetails(task, body);
+    return { body: store.updateTask(updated) };
   }
 
   const taskStatusMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/status$/);
@@ -146,6 +186,45 @@ async function route({ method, url, body, store }) {
     const task = store.getTask(body.workspaceId, taskAssignMatch[1]);
     const updated = assignTask(task, body.ownerId, body);
     return { body: store.updateTask(updated) };
+  }
+
+  const taskCommentMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/comments$/);
+  if (method === 'POST' && taskCommentMatch) {
+    const task = store.getTask(body.workspaceId, taskCommentMatch[1]);
+    const updated = addTaskComment(task, body);
+    return { status: 201, body: store.updateTask(updated) };
+  }
+
+  const taskSubtaskMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/subtasks$/);
+  if (method === 'POST' && taskSubtaskMatch) {
+    const task = store.getTask(body.workspaceId, taskSubtaskMatch[1]);
+    const updated = addSubtask(task, body);
+    return { status: 201, body: store.updateTask(updated) };
+  }
+
+  const subtaskStatusMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/subtasks\/([^/]+)\/status$/);
+  if (method === 'PATCH' && subtaskStatusMatch) {
+    const task = store.getTask(body.workspaceId, subtaskStatusMatch[1]);
+    const updated = changeSubtaskStatus(task, subtaskStatusMatch[2], body.status, body);
+    return { body: store.updateTask(updated) };
+  }
+
+  const taskArchiveMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/archive$/);
+  if (method === 'POST' && taskArchiveMatch) {
+    const task = store.getTask(body.workspaceId, taskArchiveMatch[1]);
+    return { body: store.updateTask(archiveTask(task, body)) };
+  }
+
+  const taskReopenMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/reopen$/);
+  if (method === 'POST' && taskReopenMatch) {
+    const task = store.getTask(body.workspaceId, taskReopenMatch[1]);
+    return { body: store.updateTask(reopenTask(task, body)) };
+  }
+
+  const recurringMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/recurring-instance$/);
+  if (method === 'POST' && recurringMatch) {
+    const task = store.getTask(body.workspaceId, recurringMatch[1]);
+    return { status: 201, body: store.createTask(createRecurringTaskInstance(task, body)) };
   }
 
   const ownerDecisionMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/owner-decision$/);
@@ -165,7 +244,7 @@ async function route({ method, url, body, store }) {
   if (method === 'GET' && url.pathname === '/api/boards/kanban') {
     const workspaceId = requiredQuery(url, 'workspaceId');
     store.requireWorkspace(workspaceId);
-    return { body: groupTasksForKanban(store.listTasks(workspaceId)) };
+    return { body: groupTasksForKanban(store.listTasks(workspaceId, queryFilters(url))) };
   }
 
   if (method === 'POST' && url.pathname === '/api/triage/email') {
@@ -177,20 +256,24 @@ async function route({ method, url, body, store }) {
   const suggestionApproveMatch = url.pathname.match(/^\/api\/triage\/suggestions\/([^/]+)\/approve$/);
   if (method === 'POST' && suggestionApproveMatch) {
     const suggestion = store.getSuggestion(body.workspaceId, suggestionApproveMatch[1]);
-    const task = await approveSuggestedTask(suggestion, { createTask: (item) => store.createTaskFromSuggestion(item) }, body);
+    const task = await approveSuggestedTask(suggestion, {
+      createTask: (item) => store.createTaskFromSuggestion(item)
+    }, body);
     return { status: 201, body: task };
   }
 
   if (method === 'GET' && url.pathname === '/api/briefs/daily') {
     const workspaceId = requiredQuery(url, 'workspaceId');
     store.requireWorkspace(workspaceId);
-    return { body: generateDailyBrief(store.listTasks(workspaceId), { now: url.searchParams.get('now') || undefined }) };
+    return {
+      body: generateDailyBrief(store.allTasks(workspaceId), { now: url.searchParams.get('now') || undefined })
+    };
   }
 
   if (method === 'GET' && url.pathname === '/api/briefs/weekly') {
     const workspaceId = requiredQuery(url, 'workspaceId');
     store.requireWorkspace(workspaceId);
-    return { body: generateWeeklyReview(store.listTasks(workspaceId)) };
+    return { body: generateWeeklyReview(store.allTasks(workspaceId)) };
   }
 
   throw notFound('ROUTE_NOT_FOUND', 'Route not found.');
@@ -219,12 +302,26 @@ function sendJson(res, status, body) {
 function requiredQuery(url, name) {
   const value = String(url.searchParams.get(name) || '').trim();
   if (!value) {
-    const error = new Error(`${name} is required.`);
+    const error = new Error(`${name} required.`);
     error.statusCode = 400;
     error.code = 'VALIDATION_ERROR';
     throw error;
   }
   return value;
+}
+
+function queryFilters(url) {
+  return {
+    query: url.searchParams.get('query') || url.searchParams.get('q') || undefined,
+    ownerId: url.searchParams.get('ownerId') || undefined,
+    projectId: url.searchParams.get('projectId') || undefined,
+    listId: url.searchParams.get('listId') || undefined,
+    status: url.searchParams.get('status') || undefined,
+    tag: url.searchParams.get('tag') || undefined,
+    dueBefore: url.searchParams.get('dueBefore') || undefined,
+    dueAfter: url.searchParams.get('dueAfter') || undefined,
+    includeArchived: url.searchParams.get('includeArchived') === 'true'
+  };
 }
 
 function notFound(code, message) {
