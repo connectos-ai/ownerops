@@ -10,6 +10,9 @@ The current public candidate implements:
 - Slack URL verification challenge response.
 - `POST /slack/interactions` with Slack request signature verification.
 - `POST /slack/commands` with Slack request signature verification.
+- OAuth install start and callback routes.
+- Encrypted Slack installation token storage.
+- Signed uninstall and token-revoked event handling.
 - Message shortcut handling for `ownerops_turn_message_into_task`.
 - Slash command task creation with `/ownerops task <task title>`.
 - Modal submission task creation with `view.callback_id: "ownerops_task_create"`.
@@ -17,7 +20,43 @@ The current public candidate implements:
 - Idempotency for retried Slack actions.
 - Optional Slack team-to-OwnerOps workspace scoping using `workspace.policies.slackTeamId`.
 
-The current slice does not yet implement Slack OAuth, token storage, App Home, opening modals through Slack Web API, or outgoing Slack API calls.
+The current slice does not yet implement App Home, opening modals through Slack Web API, or outgoing Slack API calls.
+
+## OAuth Installation
+
+OAuth start route:
+
+```text
+GET /slack/oauth/start?workspaceId=workspace_demo
+```
+
+The route returns a Slack authorization URL containing signed state. The state binds the install attempt to the OwnerOps workspace and redirect URI, expires after ten minutes, and is verified before OwnerOps exchanges Slack's temporary code.
+
+OAuth callback route:
+
+```text
+GET /slack/oauth/callback?code=:code&state=:state
+```
+
+OwnerOps exchanges the code with Slack's `oauth.v2.access` method, stores only encrypted token records, and returns non-secret installation metadata. If the authorize URL includes `redirect_uri`, Slack requires the same redirect URI in the access-token exchange.
+
+Required environment:
+
+```text
+OWNEROPS_SLACK_CLIENT_ID
+OWNEROPS_SLACK_CLIENT_SECRET
+OWNEROPS_SLACK_REDIRECT_URI
+OWNEROPS_SLACK_OAUTH_STATE_SECRET
+OWNEROPS_TOKEN_ENCRYPTION_KEY
+```
+
+The Events API handler processes signed `app_uninstalled` and `tokens_revoked` events by marking the Slack installation revoked and removing stored encrypted token material.
+
+References:
+
+- https://docs.slack.dev/authentication/installing-with-oauth
+- https://docs.slack.dev/reference/methods/oauth.v2.access
+- https://docs.slack.dev/reference/events/app_uninstalled
 
 ## Request Verification
 
@@ -132,7 +171,7 @@ For `BLOCKED` and `WAITING`, include the normal task status fields:
 
 ## Workspace Scoping
 
-When a workspace has `policies.slackTeamId`, Slack interaction payloads must come from the same Slack team ID. This is a first guardrail, not a complete authorization system. Full release still requires Slack OAuth installation records, role checks, token encryption, uninstall handling, and audit events for sensitive actions.
+When a workspace has `policies.slackTeamId`, Slack interaction payloads must come from the same Slack team ID. This is a first guardrail, not a complete authorization system. Full release still requires role checks and audit events for sensitive actions.
 
 ## Retry Handling
 

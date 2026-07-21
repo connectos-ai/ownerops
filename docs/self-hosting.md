@@ -32,4 +32,4 @@ If an existing data file is present, the restore script first saves a pre-restor
 
 ## Production Direction
 
-The JSON store is a simple portable development store. Production self-hosting should move to a transactional database with migrations, encrypted token storage, workspace isolation, and tested backup/restore procedures before public release `PASS`.
+The JSON store is a simple portable development store. Slack installation tokens are encrypted before they enter the JSON snapshot, but production self-hosting should still move to a transactional database with migrations, stronger workspace isolation, and tested backup/restore procedures before public release `PASS`.

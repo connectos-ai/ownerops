@@ -21,6 +21,7 @@ export class InMemoryOwnerOpsStore {
     this.tasks = new Map();
     this.suggestions = new Map();
     this.processedSlackActions = new Set();
+    this.slackInstallations = new Map();
     if (snapshot) this.loadSnapshot(snapshot);
   }
 
@@ -112,6 +113,33 @@ export class InMemoryOwnerOpsStore {
     this.persist();
   }
 
+  saveSlackInstallation(installation) {
+    this.slackInstallations.set(installation.teamId, installation);
+    this.persist();
+    return installation;
+  }
+
+  getSlackInstallationByTeam(slackTeamId) {
+    return this.slackInstallations.get(slackTeamId) || null;
+  }
+
+  revokeSlackInstallationByTeam(slackTeamId, reason = 'revoked') {
+    const installation = this.slackInstallations.get(slackTeamId);
+    if (!installation) return null;
+    const revoked = {
+      ...installation,
+      status: 'REVOKED',
+      botToken: null,
+      authedUserToken: null,
+      revokedAt: new Date().toISOString(),
+      revokedReason: reason,
+      updatedAt: new Date().toISOString()
+    };
+    this.slackInstallations.set(slackTeamId, revoked);
+    this.persist();
+    return revoked;
+  }
+
   getSuggestion(workspaceId, suggestionId) {
     const suggestion = this.suggestions.get(suggestionId);
     const suggestionWorkspaceId = suggestion?.workspaceId || suggestion?.task?.workspaceId;
@@ -156,7 +184,8 @@ export class InMemoryOwnerOpsStore {
       workspaces: [...this.workspaces.values()],
       tasks: [...this.tasks.values()],
       suggestions: [...this.suggestions.values()],
-      processedSlackActions: [...this.processedSlackActions.values()]
+      processedSlackActions: [...this.processedSlackActions.values()],
+      slackInstallations: [...this.slackInstallations.values()]
     };
   }
 
@@ -165,6 +194,9 @@ export class InMemoryOwnerOpsStore {
     for (const task of snapshot.tasks || []) this.tasks.set(task.id, task);
     for (const suggestion of snapshot.suggestions || []) this.suggestions.set(suggestion.id, suggestion);
     for (const action of snapshot.processedSlackActions || []) this.processedSlackActions.add(action);
+    for (const installation of snapshot.slackInstallations || []) {
+      this.slackInstallations.set(installation.teamId, installation);
+    }
   }
 
   persist() {}

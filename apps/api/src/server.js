@@ -13,10 +13,15 @@ import {
 } from '../../../packages/core/src/index.js';
 import { FileOwnerOpsStore, InMemoryOwnerOpsStore } from '../../../packages/storage/src/index.js';
 import {
+  buildSlackOAuthAuthorizeUrl,
+  createSlackInstallationFromOAuth,
+  createSlackOAuthState,
   handleSlackCommand,
+  handleSlackEvent,
   handleSlackInteraction,
   handleSlackUrlVerification,
   parseSlackInteractionBody,
+  verifySlackOAuthState,
   verifySlackRequest
 } from '../../../packages/slack/src/index.js';
 import { approveSuggestedTask, triageEmailToTaskSuggestion } from '../../../packages/triage/src/index.js';
@@ -26,8 +31,9 @@ export { FileOwnerOpsStore, InMemoryOwnerOpsStore };
 export function createOwnerOpsServer(options = {}) {
   const store = options.store || createDefaultStore(options);
   const slackSigningSecret = options.slackSigningSecret || process.env.OWNEROPS_SLACK_SIGNING_SECRET || '';
+  const slackOAuth = createSlackOAuthConfig(options);
 
-  return http.createServer(async (req, res) => {
+  const server = http.createServer(async (req, res) => {
     try {
       const url = new URL(req.url || '/', 'http://localhost');
       const requestBody = await readRequestBody(req);
@@ -38,7 +44,8 @@ export function createOwnerOpsServer(options = {}) {
         rawBody: requestBody.rawBody,
         headers: req.headers,
         store,
-        slackSigningSecret
+        slackSigningSecret,
+        slackOAuth
       });
       sendJson(res, result.status || 200, result.body);
     } catch (error) {
@@ -50,6 +57,8 @@ export function createOwnerOpsServer(options = {}) {
       });
     }
   });
+  server.ownerOpsStore = store;
+  return server;
 }
 
 function createDefaultStore(options) {
@@ -59,16 +68,55 @@ function createDefaultStore(options) {
   return new InMemoryOwnerOpsStore();
 }
 
-async function route({ method, url, body, rawBody, headers, store, slackSigningSecret }) {
+function createSlackOAuthConfig(options) {
+  const provided = options.slackOAuth || {};
+  return {
+    clientId: provided.clientId || process.env.OWNEROPS_SLACK_CLIENT_ID || '',
+    clientSecret: provided.clientSecret || process.env.OWNEROPS_SLACK_CLIENT_SECRET || '',
+    redirectUri: provided.redirectUri || process.env.OWNEROPS_SLACK_REDIRECT_URI || '',
+    stateSecret: provided.stateSecret || process.env.OWNEROPS_SLACK_OAUTH_STATE_SECRET || '',
+    tokenEncryptionKey: provided.tokenEncryptionKey || process.env.OWNEROPS_TOKEN_ENCRYPTION_KEY || '',
+    scopes: provided.scopes || parseCsv(process.env.OWNEROPS_SLACK_SCOPES || ''),
+    userScopes: provided.userScopes || parseCsv(process.env.OWNEROPS_SLACK_USER_SCOPES || ''),
+    exchangeOAuthCode: provided.exchangeOAuthCode || exchangeSlackOAuthCode
+  };
+}
+
+async function route({ method, url, body, rawBody, headers, store, slackSigningSecret, slackOAuth }) {
   if (method === 'GET' && url.pathname === '/healthz') {
     return { body: { ok: true, service: 'ownerops-api' } };
+  }
+
+  if (method === 'GET' && url.pathname === '/slack/oauth/start') {
+    const workspaceId = requiredQuery(url, 'workspaceId');
+    store.requireWorkspace(workspaceId);
+    const state = createSlackOAuthState({
+      workspaceId,
+      redirectUri: slackOAuth.redirectUri,
+      stateSecret: slackOAuth.stateSecret
+    });
+    return {
+      body: {
+        authorizeUrl: buildSlackOAuthAuthorizeUrl({
+          clientId: slackOAuth.clientId,
+          redirectUri: slackOAuth.redirectUri,
+          scopes: slackOAuth.scopes,
+          userScopes: slackOAuth.userScopes,
+          state
+        })
+      }
+    };
+  }
+
+  if (method === 'GET' && url.pathname === '/slack/oauth/callback') {
+    return handleSlackOAuthCallback({ url, store, slackOAuth });
   }
 
   if (method === 'POST' && url.pathname === '/slack/events') {
     requireValidSlackSignature({ headers, rawBody, slackSigningSecret });
     const urlVerification = handleSlackUrlVerification(body);
     if (urlVerification) return { body: urlVerification };
-    return { body: { ok: true } };
+    return { body: handleSlackEvent(body, store) };
   }
 
   if (method === 'POST' && url.pathname === '/slack/interactions') {
@@ -224,6 +272,48 @@ async function route({ method, url, body, rawBody, headers, store, slackSigningS
   throw notFound('ROUTE_NOT_FOUND', 'Route not found.');
 }
 
+async function handleSlackOAuthCallback({ url, store, slackOAuth }) {
+  if (url.searchParams.get('error')) {
+    const error = new Error(`Slack OAuth rejected: ${url.searchParams.get('error')}`);
+    error.statusCode = 400;
+    error.code = 'SLACK_OAUTH_REJECTED';
+    throw error;
+  }
+  const code = requiredQuery(url, 'code');
+  const state = requiredQuery(url, 'state');
+  const payload = verifySlackOAuthState({
+    state,
+    stateSecret: slackOAuth.stateSecret
+  });
+  store.requireWorkspace(payload.workspaceId);
+  if (payload.redirectUri !== slackOAuth.redirectUri) {
+    const error = new Error('Slack OAuth redirect URI mismatch.');
+    error.statusCode = 400;
+    error.code = 'SLACK_OAUTH_REDIRECT_MISMATCH';
+    throw error;
+  }
+  const exchange = await slackOAuth.exchangeOAuthCode({
+    code,
+    clientId: slackOAuth.clientId,
+    clientSecret: slackOAuth.clientSecret,
+    redirectUri: slackOAuth.redirectUri
+  });
+  const installation = createSlackInstallationFromOAuth(exchange, {
+    workspaceId: payload.workspaceId,
+    tokenEncryptionKey: slackOAuth.tokenEncryptionKey
+  });
+  store.saveSlackInstallation(installation);
+  return {
+    body: {
+      ok: true,
+      workspaceId: installation.workspaceId,
+      teamId: installation.teamId,
+      botUserId: installation.botUserId,
+      status: installation.status
+    }
+  };
+}
+
 async function readRequestBody(req) {
   if (!['POST', 'PATCH', 'PUT'].includes(req.method || 'GET')) return {};
   let raw = '';
@@ -256,6 +346,27 @@ function requireValidSlackSignature({ headers, rawBody, slackSigningSecret }) {
     error.code = `SLACK_SIGNATURE_${result.reason.toUpperCase()}`;
     throw error;
   }
+}
+
+async function exchangeSlackOAuthCode({ code, clientId, clientSecret, redirectUri }) {
+  const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+  const body = new URLSearchParams({ code, redirect_uri: redirectUri });
+  const response = await fetch('https://slack.com/api/oauth.v2.access', {
+    method: 'POST',
+    headers: {
+      authorization: `Basic ${credentials}`,
+      'content-type': 'application/x-www-form-urlencoded'
+    },
+    body
+  });
+  return response.json();
+}
+
+function parseCsv(value) {
+  return String(value || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 function sendJson(res, status, body) {

@@ -329,6 +329,152 @@ test('slack interaction parser accepts payload form bodies', () => {
   );
 });
 
+test('slack oauth installs workspace with encrypted tokens', async () => {
+  const app = createOwnerOpsServer({
+    slackSigningSecret: signingSecret,
+    slackOAuth: {
+      clientId: 'client_demo',
+      clientSecret: 'client_demo_private',
+      redirectUri: 'https://ownerops.example/slack/oauth/callback',
+      stateSecret: 'state_secret_demo',
+      tokenEncryptionKey: 'local_encryption_key_for_tests',
+      exchangeOAuthCode: async ({ code, redirectUri }) => {
+        assert.equal(code, 'code_demo');
+        assert.equal(redirectUri, 'https://ownerops.example/slack/oauth/callback');
+        return {
+          ok: true,
+          access_token: 'bot_token_demo',
+          scope: 'commands,chat:write',
+          team: { id: 'T_DEMO', name: 'Demo Team' },
+          bot_user_id: 'B_DEMO',
+          authed_user: {
+            id: 'U_INSTALLER',
+            access_token: 'user_token_demo',
+            scope: 'users:read'
+          }
+        };
+      }
+    }
+  });
+  const server = app.listen(0);
+  await onceListening(server);
+  const baseUrl = `http://127.0.0.1:${server.address().port}`;
+
+  try {
+    await requestJson(baseUrl, 'POST', '/api/workspaces', {
+      id: 'workspace_demo',
+      name: 'Demo Team',
+      policies: { slackTeamId: 'T_DEMO' }
+    });
+
+    const start = await requestJson(baseUrl, 'GET', '/slack/oauth/start?workspaceId=workspace_demo');
+    const authorizeUrl = new URL(start.authorizeUrl);
+    assert.equal(authorizeUrl.hostname, 'slack.com');
+    assert.equal(authorizeUrl.pathname, '/oauth/v2/authorize');
+    assert.equal(authorizeUrl.searchParams.get('client_id'), 'client_demo');
+    assert.equal(authorizeUrl.searchParams.get('redirect_uri'), 'https://ownerops.example/slack/oauth/callback');
+    assert.match(authorizeUrl.searchParams.get('scope'), /commands/);
+
+    const callback = await requestJson(
+      baseUrl,
+      'GET',
+      `/slack/oauth/callback?code=code_demo&state=${encodeURIComponent(authorizeUrl.searchParams.get('state'))}`
+    );
+    const installation = app.ownerOpsStore.getSlackInstallationByTeam('T_DEMO');
+    const snapshotText = JSON.stringify(app.ownerOpsStore.snapshot());
+
+    assert.equal(callback.ok, true);
+    assert.equal(callback.workspaceId, 'workspace_demo');
+    assert.equal(callback.teamId, 'T_DEMO');
+    assert.equal(installation.status, 'ACTIVE');
+    assert.equal(installation.botUserId, 'B_DEMO');
+    assert.notEqual(installation.botToken.ciphertext, 'bot_token_demo');
+    assert.notEqual(installation.authedUserToken.ciphertext, 'user_token_demo');
+    assert.equal(snapshotText.includes('bot_token_demo'), false);
+    assert.equal(snapshotText.includes('user_token_demo'), false);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test('slack oauth rejects invalid state', async () => {
+  const app = createOwnerOpsServer({
+    slackOAuth: {
+      clientId: 'client_demo',
+      clientSecret: 'client_demo_private',
+      redirectUri: 'https://ownerops.example/slack/oauth/callback',
+      stateSecret: 'state_secret_demo',
+      tokenEncryptionKey: 'local_encryption_key_for_tests',
+      exchangeOAuthCode: async () => {
+        throw new Error('state should fail before exchange');
+      }
+    }
+  });
+  const server = app.listen(0);
+  await onceListening(server);
+  const baseUrl = `http://127.0.0.1:${server.address().port}`;
+
+  try {
+    const response = await fetch(`${baseUrl}/slack/oauth/callback?code=code_demo&state=tampered_state`);
+    const body = await response.json();
+
+    assert.equal(response.status, 400);
+    assert.equal(body.error.code, 'SLACK_OAUTH_STATE_INVALID');
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test('slack uninstall event revokes stored installation tokens', async () => {
+  const app = createOwnerOpsServer({
+    slackSigningSecret: signingSecret,
+    slackOAuth: {
+      clientId: 'client_demo',
+      clientSecret: 'client_demo_private',
+      redirectUri: 'https://ownerops.example/slack/oauth/callback',
+      stateSecret: 'state_secret_demo',
+      tokenEncryptionKey: 'local_encryption_key_for_tests',
+      exchangeOAuthCode: async () => ({
+        ok: true,
+        access_token: 'bot_token_demo',
+        team: { id: 'T_DEMO', name: 'Demo Team' },
+        bot_user_id: 'B_DEMO'
+      })
+    }
+  });
+  const server = app.listen(0);
+  await onceListening(server);
+  const baseUrl = `http://127.0.0.1:${server.address().port}`;
+
+  try {
+    await requestJson(baseUrl, 'POST', '/api/workspaces', {
+      id: 'workspace_demo',
+      name: 'Demo Team',
+      policies: { slackTeamId: 'T_DEMO' }
+    });
+    const start = await requestJson(baseUrl, 'GET', '/slack/oauth/start?workspaceId=workspace_demo');
+    const state = new URL(start.authorizeUrl).searchParams.get('state');
+    await requestJson(baseUrl, 'GET', `/slack/oauth/callback?code=code_demo&state=${encodeURIComponent(state)}`);
+
+    const eventBody = JSON.stringify({
+      type: 'event_callback',
+      team_id: 'T_DEMO',
+      event_id: 'Ev_DEMO',
+      event_time: 1_700_000_000,
+      event: { type: 'app_uninstalled' }
+    });
+    const response = await signedRequest(baseUrl, '/slack/events', eventBody, 'application/json');
+    const installation = app.ownerOpsStore.getSlackInstallationByTeam('T_DEMO');
+
+    assert.equal(response.ok, true);
+    assert.equal(installation.status, 'REVOKED');
+    assert.equal(installation.botToken, null);
+    assert.equal(installation.revokedReason, 'app_uninstalled');
+  } finally {
+    await closeServer(server);
+  }
+});
+
 async function signedRequest(baseUrl, path, body, contentType) {
   const response = await signedFetch(baseUrl, path, body, contentType);
   const data = await response.json();
