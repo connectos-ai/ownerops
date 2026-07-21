@@ -13,6 +13,7 @@ The current public candidate implements:
 - OAuth install start and callback routes.
 - Encrypted Slack installation token storage.
 - Signed uninstall and token-revoked event handling.
+- Outgoing Slack message sending through `chat.postMessage`.
 - Message shortcut handling for `ownerops_turn_message_into_task`.
 - Slash command task creation with `/ownerops task <task title>`.
 - Modal submission task creation with `view.callback_id: "ownerops_task_create"`.
@@ -20,7 +21,7 @@ The current public candidate implements:
 - Idempotency for retried Slack actions.
 - Optional Slack team-to-OwnerOps workspace scoping using `workspace.policies.slackTeamId`.
 
-The current slice does not yet implement App Home, opening modals through Slack Web API, or outgoing Slack API calls.
+The current slice does not yet implement App Home or opening modals through Slack Web API.
 
 ## OAuth Installation
 
@@ -57,6 +58,29 @@ References:
 - https://docs.slack.dev/authentication/installing-with-oauth
 - https://docs.slack.dev/reference/methods/oauth.v2.access
 - https://docs.slack.dev/reference/events/app_uninstalled
+
+## Outgoing Messages
+
+Outgoing message route:
+
+```text
+POST /api/slack/messages
+```
+
+Request body:
+
+```json
+{
+  "workspaceId": "workspace_demo",
+  "teamId": "T_DEMO",
+  "channel": "C_DEMO",
+  "text": "OwnerOps created task_example."
+}
+```
+
+OwnerOps finds the active Slack installation for the team, verifies it belongs to the requested OwnerOps workspace, decrypts the bot token only for the Web API call, and posts through Slack `chat.postMessage`. The API response returns non-secret send metadata such as `channel` and `ts`; it does not return tokens.
+
+Reference: https://docs.slack.dev/reference/methods/chat.postMessage
 
 ## Request Verification
 

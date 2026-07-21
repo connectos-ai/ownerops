@@ -50,6 +50,7 @@ GET    /api/briefs/daily?workspaceId=:workspaceId&now=:isoTimestamp
 GET    /api/briefs/weekly?workspaceId=:workspaceId
 GET    /slack/oauth/start?workspaceId=:workspaceId
 GET    /slack/oauth/callback?code=:code&state=:state
+POST   /api/slack/messages
 POST   /slack/events
 POST   /slack/interactions
 POST   /slack/commands

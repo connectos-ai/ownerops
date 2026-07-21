@@ -9,7 +9,7 @@ The current implemented Slack slice verifies signed requests, supports OAuth ins
 The default example bot scopes are:
 
 - `commands` for slash commands.
-- `chat:write` for future confirmations, reminders, and briefs.
+- `chat:write` for posting OwnerOps confirmations and future reminders or briefs.
 - `channels:read` and `groups:read` for future channel selection and task context.
 - `channels:history` and `groups:history` for authorized message-to-task and triage context.
 - `users:read` for Slack user mapping.
@@ -23,7 +23,7 @@ Exact scopes must be finalized against Slack API implementation before release. 
 - Commands slash-command entrypoints.
 - Interactivity buttons, selects, shortcuts, modals.
 - Message shortcut support turning Slack message into OwnerOps task.
-- Chat posting only when OwnerOps needs send task confirmations, reminders, or briefs.
+- Chat posting only when OwnerOps needs to send task confirmations, reminders, or briefs.
 - Channel/history scopes only where needed and authorized.
 
 Do not add broad workspace scopes by default. Every scope should document why it is needed, what data it can access, and whether there is a manual Slack-native fallback.

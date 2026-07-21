@@ -184,6 +184,49 @@ export function decryptSlackToken(record, encryptionKey) {
   ]).toString('utf8');
 }
 
+export async function sendSlackMessageFromInstallation(input) {
+  const installation = input.store.getSlackInstallationByTeam?.(input.teamId);
+  if (!installation || installation.workspaceId !== input.workspaceId) {
+    throw slackSendError('SLACK_INSTALLATION_NOT_FOUND', 'Slack installation not found.', 404);
+  }
+  if (installation.status !== 'ACTIVE' || !installation.botToken) {
+    throw slackSendError('SLACK_INSTALLATION_INACTIVE', 'Slack installation is not active.', 409);
+  }
+  const token = decryptSlackToken(installation.botToken, input.tokenEncryptionKey);
+  const response = await input.postMessage({
+    token,
+    channel: cleanRequired(input.channel, 'channel'),
+    text: cleanRequired(input.text, 'text'),
+    blocks: Array.isArray(input.blocks) ? input.blocks : []
+  });
+  if (!response?.ok) {
+    throw slackSendError('SLACK_MESSAGE_SEND_FAILED', response?.error || 'Slack message send failed.', 502);
+  }
+  return {
+    ok: true,
+    teamId: installation.teamId,
+    channel: response.channel || input.channel,
+    ts: response.ts || '',
+    messageText: response.message?.text || input.text
+  };
+}
+
+export async function postSlackMessage({ token, channel, text, blocks = [] }) {
+  const response = await fetch('https://slack.com/api/chat.postMessage', {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${cleanRequired(token, 'token')}`,
+      'content-type': 'application/json; charset=utf-8'
+    },
+    body: JSON.stringify({
+      channel: cleanRequired(channel, 'channel'),
+      text: cleanRequired(text, 'text'),
+      blocks
+    })
+  });
+  return response.json();
+}
+
 export function handleSlackInteraction(payload, store) {
   if (payload?.type === 'message_action') {
     return handleSlackMessageAction(payload, store);
@@ -529,6 +572,12 @@ function hmacBase64Url(secret, value) {
 
 function oauthStateError() {
   return validationError('SLACK_OAUTH_STATE_INVALID', 'Slack OAuth state is invalid.');
+}
+
+function slackSendError(code, message, statusCode) {
+  const error = validationError(code, message);
+  error.statusCode = statusCode;
+  return error;
 }
 
 function inferPriority(text) {

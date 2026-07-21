@@ -475,6 +475,70 @@ test('slack uninstall event revokes stored installation tokens', async () => {
   }
 });
 
+test('slack message send decrypts token only at send time', async () => {
+  let capturedToken = '';
+  let capturedMessage = null;
+  const app = createOwnerOpsServer({
+    slackSigningSecret: signingSecret,
+    slackOAuth: {
+      clientId: 'client_demo',
+      clientSecret: 'client_demo_private',
+      redirectUri: 'https://ownerops.example/slack/oauth/callback',
+      stateSecret: 'state_secret_demo',
+      tokenEncryptionKey: 'local_encryption_key_for_tests',
+      exchangeOAuthCode: async () => ({
+        ok: true,
+        access_token: 'bot_token_demo',
+        scope: 'chat:write',
+        team: { id: 'T_DEMO', name: 'Demo Team' },
+        bot_user_id: 'B_DEMO'
+      })
+    },
+    slackWebApi: {
+      postMessage: async ({ token, channel, text, blocks }) => {
+        capturedToken = token;
+        capturedMessage = { channel, text, blocks };
+        return { ok: true, channel, ts: '1700000000.000500', message: { text } };
+      }
+    }
+  });
+  const server = app.listen(0);
+  await onceListening(server);
+  const baseUrl = `http://127.0.0.1:${server.address().port}`;
+
+  try {
+    await requestJson(baseUrl, 'POST', '/api/workspaces', {
+      id: 'workspace_demo',
+      name: 'Demo Team',
+      policies: { slackTeamId: 'T_DEMO' }
+    });
+    const start = await requestJson(baseUrl, 'GET', '/slack/oauth/start?workspaceId=workspace_demo');
+    const state = new URL(start.authorizeUrl).searchParams.get('state');
+    await requestJson(baseUrl, 'GET', `/slack/oauth/callback?code=code_demo&state=${encodeURIComponent(state)}`);
+
+    const sent = await requestJson(baseUrl, 'POST', '/api/slack/messages', {
+      workspaceId: 'workspace_demo',
+      teamId: 'T_DEMO',
+      channel: 'C_DEMO',
+      text: 'OwnerOps created task_demo.'
+    });
+    const snapshotText = JSON.stringify(app.ownerOpsStore.snapshot());
+
+    assert.equal(sent.ok, true);
+    assert.equal(sent.channel, 'C_DEMO');
+    assert.equal(sent.ts, '1700000000.000500');
+    assert.equal(capturedToken, 'bot_token_demo');
+    assert.deepEqual(capturedMessage, {
+      channel: 'C_DEMO',
+      text: 'OwnerOps created task_demo.',
+      blocks: []
+    });
+    assert.equal(snapshotText.includes('bot_token_demo'), false);
+  } finally {
+    await closeServer(server);
+  }
+});
+
 async function signedRequest(baseUrl, path, body, contentType) {
   const response = await signedFetch(baseUrl, path, body, contentType);
   const data = await response.json();

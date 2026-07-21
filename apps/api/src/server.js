@@ -20,7 +20,9 @@ import {
   handleSlackEvent,
   handleSlackInteraction,
   handleSlackUrlVerification,
+  postSlackMessage,
   parseSlackInteractionBody,
+  sendSlackMessageFromInstallation,
   verifySlackOAuthState,
   verifySlackRequest
 } from '../../../packages/slack/src/index.js';
@@ -32,6 +34,7 @@ export function createOwnerOpsServer(options = {}) {
   const store = options.store || createDefaultStore(options);
   const slackSigningSecret = options.slackSigningSecret || process.env.OWNEROPS_SLACK_SIGNING_SECRET || '';
   const slackOAuth = createSlackOAuthConfig(options);
+  const slackWebApi = createSlackWebApiConfig(options);
 
   const server = http.createServer(async (req, res) => {
     try {
@@ -45,7 +48,8 @@ export function createOwnerOpsServer(options = {}) {
         headers: req.headers,
         store,
         slackSigningSecret,
-        slackOAuth
+        slackOAuth,
+        slackWebApi
       });
       sendJson(res, result.status || 200, result.body);
     } catch (error) {
@@ -82,7 +86,14 @@ function createSlackOAuthConfig(options) {
   };
 }
 
-async function route({ method, url, body, rawBody, headers, store, slackSigningSecret, slackOAuth }) {
+function createSlackWebApiConfig(options) {
+  const provided = options.slackWebApi || {};
+  return {
+    postMessage: provided.postMessage || postSlackMessage
+  };
+}
+
+async function route({ method, url, body, rawBody, headers, store, slackSigningSecret, slackOAuth, slackWebApi }) {
   if (method === 'GET' && url.pathname === '/healthz') {
     return { body: { ok: true, service: 'ownerops-api' } };
   }
@@ -128,6 +139,22 @@ async function route({ method, url, body, rawBody, headers, store, slackSigningS
   if (method === 'POST' && url.pathname === '/slack/commands') {
     requireValidSlackSignature({ headers, rawBody, slackSigningSecret });
     return { body: handleSlackCommand(body, store) };
+  }
+
+  if (method === 'POST' && url.pathname === '/api/slack/messages') {
+    store.requireWorkspace(body.workspaceId);
+    return {
+      body: await sendSlackMessageFromInstallation({
+        store,
+        workspaceId: body.workspaceId,
+        teamId: body.teamId,
+        channel: body.channel,
+        text: body.text,
+        blocks: body.blocks,
+        tokenEncryptionKey: slackOAuth.tokenEncryptionKey,
+        postMessage: slackWebApi.postMessage
+      })
+    };
   }
 
   if (method === 'POST' && url.pathname === '/api/workspaces') {
