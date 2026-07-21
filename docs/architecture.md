@@ -83,6 +83,12 @@ Potential implementations include direct Slack, direct Gmail, Microsoft Graph, m
 
 Slack request verification and interaction parsing live in `packages/slack`. The API app exposes `/slack/events` and `/slack/interactions`, but task updates still go through the canonical core task model and storage layer. Slack-specific payloads must not leak into core task logic.
 
+## Storage Boundary
+
+OwnerOps can run from the local JSON store for development and trials. The production persistence shape is defined by versioned SQL migrations in `packages/storage/src/relational-schema.js`. That schema is workspace-scoped, covers the canonical task system and Slack installation state, and requires encrypted credential records instead of plaintext integration secrets.
+
+The database adapter and migration runner are still pending. Until they exist and pass transaction, backup, and restore tests, the public release gate remains `FAIL`.
+
 ## Canonical Data Model
 
 OwnerOps keeps a canonical task model even when tasks are mirrored into Slack. Minimum task fields:

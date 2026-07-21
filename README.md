@@ -81,6 +81,7 @@ See:
 - `docs/architecture.md`
 - `docs/api.md`
 - `docs/self-hosting.md`
+- `docs/storage-and-migrations.md`
 - `docs/ci-and-release-gates.md`
 - `docs/slack-enhanced-app.md`
 - `docs/permissions-and-scopes.md`

@@ -5,6 +5,7 @@ OwnerOps may not be published until every item is complete.
 ## Product
 
 - [ ] Standalone task manager works without Slack, email, AI, DoBoth, or ConnectOS.
+- [x] Relational schema boundary documented without requiring a database service.
 - [ ] Slack Free native templates are usable manually.
 - [ ] Slack paid templates are documented accurately.
 - [ ] Enhanced Slack app mode is optional.

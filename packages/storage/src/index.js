@@ -13,6 +13,16 @@ import {
   searchTasks
 } from '../../core/src/index.js';
 
+export {
+  OWNEROPS_RELATIONAL_MIGRATIONS,
+  OWNEROPS_RELATIONAL_REQUIRED_INDEXES,
+  OWNEROPS_RELATIONAL_REQUIRED_TABLES,
+  OWNEROPS_RELATIONAL_SCHEMA_VERSION,
+  findDisallowedPlaintextSecretColumns,
+  getRelationalSchemaSql,
+  validateRelationalSchema
+} from './relational-schema.js';
+
 const STORE_VERSION = 1;
 
 export class InMemoryOwnerOpsStore {
