@@ -38,7 +38,8 @@ OwnerOps may not be published until every item is complete.
 - [x] CI passes locally.
 - [x] Browser/accessibility verification complete for standalone web app.
 - [x] README quickstart works.
-- [x] License, security policy, contribution guide, code conduct present.
+- [x] License, security policy, contribution guide, and code conduct present.
+- [x] GitHub issue and pull request templates present.
 
 ## GitHub
 
