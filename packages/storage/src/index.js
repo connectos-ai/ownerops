@@ -9,8 +9,10 @@ import {
   createTask,
   createTaskList,
   createWorkspace,
+  deactivateWorkspaceUser,
   reopenTask,
-  searchTasks
+  searchTasks,
+  updateWorkspaceUser
 } from '../../core/src/index.js';
 
 export {
@@ -52,6 +54,20 @@ export class InMemoryOwnerOpsStore {
     const existing = workspace.users.find((user) => user.id === input?.id);
     if (existing) return existing;
     const user = addWorkspaceUser(workspace, input);
+    this.persist();
+    return user;
+  }
+
+  updateWorkspaceUser(workspaceId, userId, input) {
+    const workspace = this.requireWorkspace(workspaceId);
+    const user = updateWorkspaceUser(workspace, userId, input);
+    this.persist();
+    return user;
+  }
+
+  deactivateWorkspaceUser(workspaceId, userId, input = {}) {
+    const workspace = this.requireWorkspace(workspaceId);
+    const user = deactivateWorkspaceUser(workspace, userId, input);
     this.persist();
     return user;
   }

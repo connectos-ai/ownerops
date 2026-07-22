@@ -8,6 +8,7 @@ decisions, Slack data, email data, provider credentials, and backups as sensitiv
 | Data | Examples | Handling |
 | --- | --- | --- |
 | Task data | titles, descriptions, status, due dates, owners | Workspace-scoped; backed up; not public |
+| Identity metadata | display names, roles, statuses, external provider IDs, email hashes | Store minimal mapping fields; hash emails; avoid raw email in task records |
 | Source metadata | email thread IDs, Slack links, sender labels | Store minimal references; avoid bodies by default |
 | Credentials | OAuth tokens, Slack tokens, signing secrets | Environment or encrypted credential records only |
 | AI inputs | authorized message snippets, summaries | Send only when AI configured and policy allows |
@@ -41,6 +42,8 @@ Coverage lives in `tests/observability-redaction.test.js`.
 - Use project-relative ignored `data/` for local JSON trials.
 - Use PostgreSQL-compatible store for production deployments.
 - Scope durable rows by workspace.
+- Store workspace user lifecycle and external identity mappings without raw
+  email addresses; use `emailHash` for provider matching.
 - Store integration tokens as encrypted records.
 - Keep backups under ignored backup directories.
 

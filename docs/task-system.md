@@ -36,6 +36,8 @@ OwnerOps starts as a task manager before it becomes an integration system.
 ## Required Behaviors
 
 - Create tasks manually.
+- Invite, activate, map, and deactivate workspace users without deleting task
+  history.
 - Assign and reassign one accountable owner.
 - Add collaborators.
 - Create projects and lists for standalone personal or team organization.
@@ -49,6 +51,18 @@ OwnerOps starts as a task manager before it becomes an integration system.
 - Search and filter by text, owner, project, list, status, tag, due date, and archived state.
 - Generate recurring task instances from an existing task template.
 - Prevent accidental duplicate creation using source IDs or idempotency keys.
+
+## Workspace Users
+
+Workspace users can be `admin`, `member`, or `guest`, and may be `invited`,
+`active`, or `deactivated`. Tasks keep user IDs as history-preserving
+references, so deactivating a user does not erase past ownership, comments, or
+decisions.
+
+User records may include Slack IDs or other external provider IDs. Raw email
+addresses are converted to `emailHash` before storage so OwnerOps can match an
+authorized provider identity without exposing personal email addresses in task
+records, public channels, logs, or examples.
 
 ## Conflict Strategy
 

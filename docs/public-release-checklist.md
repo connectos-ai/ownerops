@@ -7,6 +7,8 @@ OwnerOps may not be published until every item is complete.
 - [x] Standalone task manager works without Slack, email, AI, DoBoth, or ConnectOS.
 - [x] Static standalone web app served by local API.
 - [x] Workspace, member, project, list setup available in standalone web app.
+- [x] Workspace user invitation, role/status lifecycle, privacy-safe identity
+      mapping, and deactivation API tested.
 - [x] Relational schema, adapter, migration runner documented without requiring database service for local JSON use.
 - [x] Slack Free native templates usable manually.
 - [x] Slack paid templates are documented accurately.
@@ -30,6 +32,7 @@ OwnerOps may not be published until every item is complete.
 - [x] No secrets or secret-shaped values.
 - [x] HTTP API auth policy reviewed.
 - [x] Privacy-conscious log redaction utility tested.
+- [x] Workspace user email handling stores hashes instead of raw email.
 - [x] Dependency audit reviewed.
 - [x] Database backup/restore procedure reviewed.
 - [ ] `docs/security/public-release-security-audit.md` says `PASS`.

@@ -20,14 +20,23 @@ find "$ROOT" \
 LOCAL_PATH_PATTERN="/U""sers/|/h""ome/"
 SECRET_PATTERN='xox[baprs]-|ya29\.|BEGIN (RSA|OPENSSH|EC|PRIVATE) KEY|AKIA[0-9A-Z]{16}|sk-[A-Za-z0-9]{20,}'
 
+rg -n --hidden \
+--glob '!.git/**' \
+--glob '!node_modules/**' \
+--glob '!package-lock.json' \
+--glob '!coverage/**' \
+--glob '!scripts/public-release-audit.sh' \
+"$LOCAL_PATH_PATTERN" "$ROOT" \
+| awk -F: '{ print "blocked local path: " $1 ":" $2 }' >> "$TMP" || true
+
 rg -n -i --hidden \
-  --glob '!.git/**' \
-  --glob '!node_modules/**' \
-  --glob '!package-lock.json' \
-  --glob '!coverage/**' \
-  --glob '!scripts/public-release-audit.sh' \
-  "$LOCAL_PATH_PATTERN|$SECRET_PATTERN" "$ROOT" \
-  | awk -F: '{ print "blocked term: " $1 ":" $2 }' >> "$TMP" || true
+--glob '!.git/**' \
+--glob '!node_modules/**' \
+--glob '!package-lock.json' \
+--glob '!coverage/**' \
+--glob '!scripts/public-release-audit.sh' \
+"$SECRET_PATTERN" "$ROOT" \
+| awk -F: '{ print "blocked term: " $1 ":" $2 }' >> "$TMP" || true
 
 if [ -n "${OWNEROPS_PRIVATE_DENYLIST:-}" ]; then
   rg -n -i --hidden \

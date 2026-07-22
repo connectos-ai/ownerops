@@ -59,6 +59,68 @@ test('workspace setup is idempotent and exposes members projects lists', async (
   }
 });
 
+test('workspace users support invitations identity mapping and deactivation without exposing raw email', async () => {
+  const app = createOwnerOpsServer();
+  const server = app.listen(0);
+  await onceListening(server);
+  const baseUrl = `http://127.0.0.1:${server.address().port}`;
+
+  try {
+    await requestJson(baseUrl, 'POST', '/api/workspaces', {
+      id: 'workspace_users',
+      name: 'Users Team'
+    });
+
+    const invited = await requestJson(baseUrl, 'POST', '/api/workspaces/workspace_users/users', {
+      id: 'user_guest',
+      displayName: 'Guest Reviewer',
+      role: 'guest',
+      status: 'invited',
+      email: 'guest@example.com',
+      slackUserId: 'U_EXAMPLE_GUEST',
+      externalIds: {
+        slackUserId: 'U_EXAMPLE_GUEST',
+        emailProviderContactId: 'contact_example_guest'
+      }
+    });
+
+    assert.equal(invited.status, 'invited');
+    assert.equal(invited.role, 'guest');
+    assert.equal(invited.email, undefined);
+    assert.match(invited.emailHash, /^[a-f0-9]{64}$/);
+    assert.equal(invited.externalIds.slackUserId, 'U_EXAMPLE_GUEST');
+    assert.ok(invited.invitedAt);
+
+    const activated = await requestJson(baseUrl, 'PATCH', '/api/workspaces/workspace_users/users/user_guest', {
+      displayName: 'Guest Reviewer',
+      role: 'member',
+      status: 'active',
+      externalIds: {
+        crmContactId: 'crm_contact_example'
+      }
+    });
+
+    assert.equal(activated.status, 'active');
+    assert.equal(activated.role, 'member');
+    assert.equal(activated.deactivatedAt, null);
+    assert.equal(activated.externalIds.slackUserId, 'U_EXAMPLE_GUEST');
+    assert.equal(activated.externalIds.crmContactId, 'crm_contact_example');
+
+    const deactivated = await requestJson(baseUrl, 'POST', '/api/workspaces/workspace_users/users/user_guest/deactivate', {
+      actorId: 'user_admin'
+    });
+
+    assert.equal(deactivated.status, 'deactivated');
+    assert.ok(deactivated.deactivatedAt);
+
+    const workspace = await requestJson(baseUrl, 'GET', '/api/workspaces/workspace_users');
+    assert.equal(workspace.users[0].email, undefined);
+    assert.equal(workspace.users[0].status, 'deactivated');
+  } finally {
+    await closeServer(server);
+  }
+});
+
 test('standalone web shell includes setup controls for team task management', async () => {
   const app = createOwnerOpsServer();
   const server = app.listen(0);

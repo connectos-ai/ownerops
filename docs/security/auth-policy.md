@@ -31,4 +31,8 @@ Workspace IDs scope OwnerOps data, but they are not authentication secrets. Do n
 
 ## Current Limits
 
-This public candidate does not yet implement first-party user login, password storage, sessions, SSO, or role-based access control. Those can be added later behind the same public API boundaries without making DoBoth or ConnectOS dependencies.
+This public candidate stores workspace user role/status metadata and external
+identity mappings for assignment and future authorization policy. It does not
+yet implement first-party user login, password storage, sessions, SSO, or full
+role-based access control. Those can be added later behind the same public API
+boundaries without making DoBoth or ConnectOS dependencies.

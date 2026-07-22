@@ -21,6 +21,7 @@ GitHub-hosted CI, and final public-release security audit pass.
 | Gate | Status | Evidence |
 | --- | --- | --- |
 | Standalone task manager works without Slack, email, AI, DoBoth, or ConnectOS | PASS locally | `docs/product-verification.md`, `docs/browser-accessibility-verification.md`, `tests/api-vertical-slice.test.js`, `tests/standalone-task-manager.test.js`, `tests/core-workspace.test.js` |
+| Workspace user lifecycle and identity mapping | PASS locally | `docs/task-system.md`, `docs/api.md`, `tests/workspace-setup.test.js` |
 | Slack Free native templates usable manually | PASS locally | `docs/slack-capability-matrix.md`, `docs/slack-native-starter-guide.md`, `templates/slack-free/` |
 | Slack paid templates documented accurately | PASS locally | `docs/slack-capability-matrix.md`, `docs/slack-paid-enhancements.md`, `templates/slack-paid/` |
 | Enhanced Slack app mode optional | PASS locally | `docs/slack-enhanced-app.md`, `docs/architecture.md`, `tests/slack-signing-interactions.test.js` |
@@ -44,6 +45,7 @@ GitHub-hosted CI, and final public-release security audit pass.
 | No secret-shaped values | PASS locally | `docs/security/git-history-privacy-audit.md`, `scripts/public-release-audit.sh` |
 | HTTP API auth policy reviewed | PASS locally | `docs/security/auth-policy.md`, `tests/api-auth.test.js` |
 | Privacy-conscious log redaction utility tested | PASS locally | `packages/observability/src/index.js`, `tests/observability-redaction.test.js` |
+| Workspace user emails hashed rather than stored raw | PASS locally | `docs/security/data-handling.md`, `tests/workspace-setup.test.js` |
 | Dependency audit reviewed | PASS locally | `npm audit --audit-level=high`, `npm run ci` |
 | Database backup/restore procedure reviewed | PASS locally | `docs/storage-and-migrations.md`, database backup/restore tests |
 | Threat model and data handling documented | PASS locally | `docs/security/threat-model.md`, `docs/security/data-handling.md` |

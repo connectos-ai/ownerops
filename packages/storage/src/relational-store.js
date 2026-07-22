@@ -7,8 +7,10 @@ import {
   createTask,
   createTaskList,
   createWorkspace,
+  deactivateWorkspaceUser,
   reopenTask,
-  searchTasks
+  searchTasks,
+  updateWorkspaceUser
 } from '../../core/src/index.js';
 import { OWNEROPS_RELATIONAL_MIGRATIONS } from './relational-schema.js';
 
@@ -126,8 +128,8 @@ export class RelationalOwnerOpsStore {
     const user = addWorkspaceUser(workspace, input);
     await this.client.query(
       `INSERT INTO workspace_users
-       (id, workspace_id, display_name, role, status, slack_user_id, email_hash, external_ids, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       (id, workspace_id, display_name, role, status, slack_user_id, email_hash, external_ids, invited_at, deactivated_at, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        ON CONFLICT (workspace_id, id) DO NOTHING`,
       [
         user.id,
@@ -138,9 +140,48 @@ export class RelationalOwnerOpsStore {
         user.slackUserId || '',
         user.emailHash || '',
         toJson(user.externalIds || {}),
+        user.invitedAt,
+        user.deactivatedAt,
         user.createdAt,
         user.updatedAt
       ]
+    );
+    return user;
+  }
+
+  async updateWorkspaceUser(workspaceId, userId, input) {
+    const workspace = await this.requireWorkspace(workspaceId);
+    const user = updateWorkspaceUser(workspace, userId, input);
+    await this.client.query(
+      `UPDATE workspace_users
+       SET display_name = $3, role = $4, status = $5, slack_user_id = $6, email_hash = $7,
+           external_ids = $8, invited_at = $9, deactivated_at = $10, updated_at = $11
+       WHERE workspace_id = $1 AND id = $2`,
+      [
+        workspaceId,
+        user.id,
+        user.displayName,
+        user.role,
+        user.status,
+        user.slackUserId || '',
+        user.emailHash || '',
+        toJson(user.externalIds || {}),
+        user.invitedAt,
+        user.deactivatedAt,
+        user.updatedAt
+      ]
+    );
+    return user;
+  }
+
+  async deactivateWorkspaceUser(workspaceId, userId, input = {}) {
+    const workspace = await this.requireWorkspace(workspaceId);
+    const user = deactivateWorkspaceUser(workspace, userId, input);
+    await this.client.query(
+      `UPDATE workspace_users
+       SET status = $3, deactivated_at = $4, updated_at = $5
+       WHERE workspace_id = $1 AND id = $2`,
+      [workspaceId, user.id, user.status, user.deactivatedAt, user.updatedAt]
     );
     return user;
   }
@@ -529,6 +570,8 @@ function rowToWorkspaceUser(row) {
     slackUserId: row.slack_user_id || '',
     emailHash: row.email_hash || '',
     externalIds: parseJson(row.external_ids, {}),
+    invitedAt: row.invited_at ? toIso(row.invited_at) : null,
+    deactivatedAt: row.deactivated_at ? toIso(row.deactivated_at) : null,
     createdAt: toIso(row.created_at),
     updatedAt: toIso(row.updated_at)
   };

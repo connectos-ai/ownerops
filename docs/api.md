@@ -39,6 +39,8 @@ GET    /healthz
 POST   /api/workspaces
 GET    /api/workspaces/:workspaceId
 POST   /api/workspaces/:workspaceId/users
+PATCH  /api/workspaces/:workspaceId/users/:userId
+POST   /api/workspaces/:workspaceId/users/:userId/deactivate
 POST   /api/workspaces/:workspaceId/projects
 POST   /api/workspaces/:workspaceId/lists
 POST   /api/tasks
@@ -87,6 +89,18 @@ curl -sS http://localhost:3100/api/workspaces/workspace_demo/users \
   -H 'content-type: application/json' \
   -d '{"id":"user_owner","displayName":"Owner"}'
 ```
+
+Invite or map a user without storing raw email:
+
+```bash
+curl -sS http://localhost:3100/api/workspaces/workspace_demo/users \
+  -H 'content-type: application/json' \
+  -d '{"id":"user_reviewer","displayName":"Reviewer","role":"guest","status":"invited","email":"reviewer@example.com","externalIds":{"slackUserId":"U_EXAMPLE"}}'
+```
+
+OwnerOps stores `emailHash`, external provider IDs, role, and lifecycle
+status. It does not return or persist raw email addresses in public task
+records.
 
 Create a task:
 

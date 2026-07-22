@@ -241,6 +241,16 @@ async function route({ method, url, body, rawBody, headers, store, slackSigningS
     return { status: 201, body: await store.addWorkspaceUser(workspaceUserMatch[1], body) };
   }
 
+  const workspaceUserUpdateMatch = url.pathname.match(/^\/api\/workspaces\/([^/]+)\/users\/([^/]+)$/);
+  if (method === 'PATCH' && workspaceUserUpdateMatch) {
+    return { body: await store.updateWorkspaceUser(workspaceUserUpdateMatch[1], workspaceUserUpdateMatch[2], body) };
+  }
+
+  const workspaceUserDeactivateMatch = url.pathname.match(/^\/api\/workspaces\/([^/]+)\/users\/([^/]+)\/deactivate$/);
+  if (method === 'POST' && workspaceUserDeactivateMatch) {
+    return { body: await store.deactivateWorkspaceUser(workspaceUserDeactivateMatch[1], workspaceUserDeactivateMatch[2], body) };
+  }
+
   const workspaceProjectMatch = url.pathname.match(/^\/api\/workspaces\/([^/]+)\/projects$/);
   if (method === 'POST' && workspaceProjectMatch) {
     return { status: 201, body: await store.createProject(workspaceProjectMatch[1], body) };

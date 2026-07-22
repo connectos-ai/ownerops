@@ -252,9 +252,30 @@ class MemorySqlClient {
           slack_user_id: params[5],
           email_hash: params[6],
           external_ids: params[7],
-          created_at: params[8],
-          updated_at: params[9]
+          invited_at: params[8],
+          deactivated_at: params[9],
+          created_at: params[10],
+          updated_at: params[11]
         });
+      }
+      return { rows: [] };
+    }
+    if (normalized.startsWith('update workspace_users')) {
+      const row = this.tables.users.find((item) => item.workspace_id === params[0] && item.id === params[1]);
+      if (row && normalized.includes('display_name')) {
+        row.display_name = params[2];
+        row.role = params[3];
+        row.status = params[4];
+        row.slack_user_id = params[5];
+        row.email_hash = params[6];
+        row.external_ids = params[7];
+        row.invited_at = params[8];
+        row.deactivated_at = params[9];
+        row.updated_at = params[10];
+      } else if (row) {
+        row.status = params[2];
+        row.deactivated_at = params[3];
+        row.updated_at = params[4];
       }
       return { rows: [] };
     }

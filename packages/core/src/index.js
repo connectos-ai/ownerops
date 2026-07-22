@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 
 export const TaskStatus = Object.freeze({
   INBOX: 'INBOX',
@@ -17,6 +17,18 @@ export const TaskPriority = Object.freeze({
   HIGH: 'HIGH',
   NORMAL: 'NORMAL',
   LOW: 'LOW'
+});
+
+export const WorkspaceUserRole = Object.freeze({
+  ADMIN: 'admin',
+  MEMBER: 'member',
+  GUEST: 'guest'
+});
+
+export const WorkspaceUserStatus = Object.freeze({
+  INVITED: 'invited',
+  ACTIVE: 'active',
+  DEACTIVATED: 'deactivated'
 });
 
 export const EventType = Object.freeze({
@@ -64,17 +76,54 @@ export function addWorkspaceUser(workspace, input) {
   const user = {
     id: cleanRequired(input?.id || `user_${randomUUID()}`, 'id'),
     displayName: cleanRequired(input?.displayName, 'displayName'),
-    role: cleanOptional(input?.role || 'member'),
-    status: cleanOptional(input?.status || 'active'),
+    role: normalizeWorkspaceUserRole(input?.role),
+    status: normalizeWorkspaceUserStatus(input?.status),
     slackUserId: cleanOptional(input?.slackUserId),
-    emailHash: cleanOptional(input?.emailHash),
-    externalIds: input?.externalIds || {},
+    emailHash: normalizeEmailHash(input),
+    externalIds: normalizeExternalIds(input?.externalIds),
+    invitedAt: input?.status === WorkspaceUserStatus.INVITED ? timestamp(input?.invitedAt || now) : normalizeNullableTimestamp(input?.invitedAt),
+    deactivatedAt: normalizeNullableTimestamp(input?.deactivatedAt),
     createdAt: now,
     updatedAt: now
   };
   workspace.users.push(user);
   workspace.updatedAt = timestamp();
   return user;
+}
+
+export function updateWorkspaceUser(workspace, userId, updates = {}) {
+  const id = cleanRequired(userId, 'userId');
+  const index = workspace.users.findIndex((user) => user.id === id);
+  if (index === -1) throw new Error(`Workspace user not found: ${id}`);
+  const existing = workspace.users[index];
+  const next = {
+    ...existing,
+    updatedAt: timestamp()
+  };
+  if ('displayName' in updates) next.displayName = cleanRequired(updates.displayName, 'displayName');
+  if ('role' in updates) next.role = normalizeWorkspaceUserRole(updates.role);
+  if ('status' in updates) {
+    next.status = normalizeWorkspaceUserStatus(updates.status);
+    if (next.status === WorkspaceUserStatus.INVITED && !next.invitedAt) next.invitedAt = timestamp();
+    if (next.status === WorkspaceUserStatus.DEACTIVATED) next.deactivatedAt = timestamp(updates.deactivatedAt);
+    if (next.status !== WorkspaceUserStatus.DEACTIVATED) next.deactivatedAt = null;
+  }
+  if ('slackUserId' in updates) next.slackUserId = cleanOptional(updates.slackUserId);
+  if ('email' in updates || 'emailHash' in updates) next.emailHash = normalizeEmailHash(updates);
+  if ('externalIds' in updates) {
+    next.externalIds = normalizeExternalIds({ ...(next.externalIds || {}), ...(updates.externalIds || {}) });
+  }
+  workspace.users[index] = next;
+  workspace.updatedAt = timestamp();
+  return next;
+}
+
+export function deactivateWorkspaceUser(workspace, userId, input = {}) {
+  return updateWorkspaceUser(workspace, userId, {
+    ...input,
+    status: WorkspaceUserStatus.DEACTIVATED,
+    deactivatedAt: timestamp(input.deactivatedAt)
+  });
 }
 
 export function createProject(workspace, input) {
@@ -528,6 +577,37 @@ function normalizeRecurrence(value) {
     sourceTaskId: cleanOptional(value.sourceTaskId),
     generatedAt: value.generatedAt ? timestamp(value.generatedAt) : null
   };
+}
+
+function normalizeWorkspaceUserRole(value) {
+  const role = cleanOptional(value || WorkspaceUserRole.MEMBER).toLowerCase();
+  if (!Object.values(WorkspaceUserRole).includes(role)) {
+    throw new Error(`Invalid workspace user role: ${value}`);
+  }
+  return role;
+}
+
+function normalizeWorkspaceUserStatus(value) {
+  const status = cleanOptional(value || WorkspaceUserStatus.ACTIVE).toLowerCase();
+  if (!Object.values(WorkspaceUserStatus).includes(status)) {
+    throw new Error(`Invalid workspace user status: ${value}`);
+  }
+  return status;
+}
+
+function normalizeEmailHash(input = {}) {
+  if (input.emailHash) return cleanOptional(input.emailHash);
+  const email = cleanOptional(input.email).toLowerCase();
+  if (!email) return '';
+  return createHash('sha256').update(email).digest('hex');
+}
+
+function normalizeExternalIds(value = {}) {
+  return Object.fromEntries(
+    Object.entries(value || {})
+      .map(([key, externalId]) => [cleanOptional(key), cleanOptional(externalId)])
+      .filter(([key, externalId]) => key && externalId)
+  );
 }
 
 function cleanRequired(value, name) {
