@@ -40,5 +40,7 @@ CI passing is necessary but not sufficient for publication. The release gate rem
 - Author and committer metadata are reviewed.
 - No private remotes are configured.
 - The target GitHub repository is inspected or safely created.
+- GitHub-hosted CI evidence is recorded.
+- Branch protection recommendations are documented.
 
-Do not push or publish OwnerOps until every release checklist item is complete.
+Do not push or publish OwnerOps until every release checklist item is complete. See `docs/github-launch-runbook.md`.

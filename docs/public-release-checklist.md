@@ -47,4 +47,4 @@ OwnerOps may not be published until every item is complete.
 - [ ] No force push needed.
 - [ ] Repository description set.
 - [ ] Default branch `main`.
-- [ ] Branch protection recommendations documented.
+- [x] Branch protection recommendations documented.

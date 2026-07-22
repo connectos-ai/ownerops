@@ -98,6 +98,7 @@ See:
 - `docs/self-hosting.md`
 - `docs/web-app.md`
 - `docs/browser-accessibility-verification.md`
+- `docs/github-launch-runbook.md`
 - `docs/storage-and-migrations.md`
 - `docs/ci-and-release-gates.md`
 - `docs/security/auth-policy.md`
