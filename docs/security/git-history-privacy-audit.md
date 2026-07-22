@@ -8,16 +8,20 @@ Status: PASS current local public-release candidate history.
 
 Repository inspected: local public-release preparation checkout.
 
-Commit inspected:
+Latest product/security content checkpoint inspected before this evidence-only
+audit update:
 
 ```text
-4c0911adc9c4ea9a1e99ebd97f514239c12fba65
+39e46114050c6d0258c9811eeab889b6d5d6223f
 ```
+
+This audit file is committed as evidence after the scan. Verify the current
+checkout with `git rev-parse HEAD` before publication.
 
 Reachable history inspected:
 
 ```text
-34 commits on main
+40 commits on main after this evidence update
 ```
 
 Object database note:
@@ -27,7 +31,8 @@ Object database note:
 - Dangling objects are not reachable from `main` and are not part of a normal
   push.
 - Dangling commits use generic maintainer metadata.
-- Dangling-object sensitive scans only matched audit-script denylist text.
+- Dangling-object sensitive scans found no private/client identifiers,
+local machine paths, or high-risk token-shaped secret patterns.
 
 ## Commands Used
 
@@ -42,7 +47,7 @@ git grep -n -I -i -E '<private-and-secret-denylist>' $(git rev-list --all)
 git fsck --full --no-reflogs
 git show --stat --oneline --decorate --summary 1e7818a18056b7855dace6a45f3388b09cad45ba
 git show --stat --oneline --decorate --summary bbe4ca5a3dba12a60b592e266fdeb13aed5e535f
-git grep -n -I -i -E '<private-and-secret-denylist>' 1e7818a18056b7855dace6a45f3388b09cad45ba bbe4ca5a3dba12a60b592e266fdeb13aed5e535f
+git cat-file -p '<dangling-object>' | grep -Eai '<private-and-secret-denylist>'
 ```
 
 Historical content scans used `git grep` across every reachable commit for
@@ -83,8 +88,9 @@ Audit covered:
 - No real `.env` files, backup artifacts, log files, runtime data, credential
   exports, Slack/Gmail tokens, private keys, or client data were found in
   reachable history.
-- Dangling local objects are unreachable from `main`; their only sensitive-scan
-  matches were audit-script denylist strings.
+- Dangling local objects are unreachable from `main`; sensitive scan found no
+  private/client identifiers, local machine paths, or high-risk token-shaped
+  secret patterns.
 
 ## Remediation
 
