@@ -126,7 +126,7 @@ test('api supports standalone task and mock email triage vertical slice', async 
     assert.equal(board.READY.length, 2);
 
     const daily = await requestJson(baseUrl, 'GET', '/api/briefs/daily?workspaceId=workspace_demo&now=2026-01-02T08:00:00.000Z');
-    assert.equal(daily.dueToday.length, 1);
+    assert.equal(daily.dueToday.length, 2);
     assert.equal(daily.recommendedNextMove.includes('today'), true);
 
     const weekly = await requestJson(baseUrl, 'GET', '/api/briefs/weekly?workspaceId=workspace_demo');

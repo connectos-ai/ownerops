@@ -5,7 +5,7 @@ Date: 2026-07-22
 Status: LOCAL RELEASE EVIDENCE COMPLETE; GITHUB EVIDENCE PENDING
 
 This index points maintainers to evidence gathered for the public OwnerOps
-release candidate. It does not mark release complete. The final gate remains
+release candidate. It does not mark the release complete. The final gate remains
 closed until authenticated GitHub repository inspection or creation,
 GitHub-hosted CI, and final public-release security audit pass.
 
@@ -21,18 +21,19 @@ GitHub-hosted CI, and final public-release security audit pass.
 | Gate | Status | Evidence |
 | --- | --- | --- |
 | Standalone task manager works without Slack, email, AI, DoBoth, or ConnectOS | PASS locally | `docs/product-verification.md`, `docs/browser-accessibility-verification.md`, `tests/api-vertical-slice.test.js`, `tests/standalone-task-manager.test.js`, `tests/core-workspace.test.js` |
-| Workspace user lifecycle and identity mapping | PASS locally | `docs/task-system.md`, `docs/api.md`, `tests/workspace-setup.test.js` |
-| Task reviewer approver and related-user filtering | PASS locally | `docs/task-system.md`, `docs/api.md`, `tests/standalone-task-manager.test.js`, `tests/relational-store.test.js` |
+| Workspace user lifecycle identity mapping | PASS locally | `docs/task-system.md`, `docs/api.md`, `tests/workspace-setup.test.js` |
+| Task reviewer approver related-user filtering | PASS locally | `docs/task-system.md`, `docs/api.md`, `tests/standalone-task-manager.test.js`, `tests/relational-store.test.js` |
 | Slack Free native templates usable manually | PASS locally | `docs/slack-capability-matrix.md`, `docs/slack-native-starter-guide.md`, `templates/slack-free/` |
 | Slack paid templates documented accurately | PASS locally | `docs/slack-capability-matrix.md`, `docs/slack-paid-enhancements.md`, `templates/slack-paid/` |
-| Enhanced Slack app mode optional | PASS locally | `docs/slack-enhanced-app.md`, `docs/architecture.md`, `tests/slack-signing-interactions.test.js` |
-| Email triage through mock/configured provider boundary | PASS locally | `docs/product-verification.md`, `docs/email-triage.md`, `packages/triage/src/index.js`, `tests/api-vertical-slice.test.js` |
-| Triage reject and duplicate merge lifecycle | PASS locally | `docs/api.md`, `docs/task-system.md`, `tests/api-vertical-slice.test.js` |
-| Daily and weekly briefs work from task data | PASS locally | `docs/product-verification.md`, `docs/daily-brief.md`, `docs/weekly-review.md`, `tests/core-workspace.test.js` |
-| DoBoth and ConnectOS optional adapters only | PASS locally | `README.md`, `docs/architecture.md`, `docs/integration-model.md`, `packages/adapters/src/index.js` |
-| Public API/event/integration boundaries documented | PASS locally | `docs/api.md`, `docs/events.md`, `docs/integration-model.md`, `packages/adapters/src/index.js` |
-| Public current-state audit documented | PASS locally | `docs/current-state-audit.md` |
-| Reusable templates and fictional examples | PASS locally | `templates/slack-free/`, `templates/slack-paid/`, `examples/email-to-task.md`, `examples/owner-decision.md`, `examples/mock-workspace-seed.json` |
+| Enhanced Slack app mode optional | PASS locally | `docs/slack-enhanced-app.md`, `packages/slack/src/index.js`, `tests/slack-app.test.js` |
+| Email triage through provider boundary | PASS locally | `docs/email-triage.md`, `packages/triage/src/index.js`, `tests/triage-vertical-slice.test.js`, `tests/api-vertical-slice.test.js` |
+| Explainable triage suggestions and due-date inference | PASS locally | `docs/email-triage.md`, `tests/triage-vertical-slice.test.js`, `tests/api-vertical-slice.test.js` |
+| Triage approval/rejection and duplicate merge | PASS locally | `tests/triage-vertical-slice.test.js`, `tests/api-vertical-slice.test.js`, `packages/core/src/index.js` |
+| Daily and weekly briefs | PASS locally | `docs/daily-brief.md`, `docs/weekly-review.md`, `tests/core-workspace.test.js`, `tests/api-vertical-slice.test.js` |
+| DoBoth and ConnectOS optional adapters only | PASS locally | `README.md`, `docs/architecture.md`, `docs/integration-model.md`, `docs/events.md` |
+| Public event model | PASS locally | `docs/events.md` |
+| Capability-based integration model | PASS locally | `docs/integration-model.md` |
+| Public current-state audit | PASS locally | `docs/current-state-audit.md` |
 
 ## Security And Privacy Evidence
 
@@ -59,12 +60,11 @@ GitHub-hosted CI, and final public-release security audit pass.
 | CI workflow configured locally | PASS locally | `.github/workflows/ci.yml`, `docs/ci-and-release-gates.md` |
 | Clean checkout install | PASS locally | `docs/security/git-history-privacy-audit.md` |
 | Tests pass | PASS locally | `npm test` |
-| No separate build step required | PASS locally | Dependency-free web app documented in `docs/web-app.md` |
-| Local CI passes | PASS locally | `npm run ci` |
-| Local release gate command | PASS locally | `npm run release:local-gate` |
+| No separate build step required | PASS locally | Dependency-free web app, `README.md` |
+| CI passes locally | PASS locally | `npm run ci` |
 | Browser/accessibility verification | PASS locally | `docs/browser-accessibility-verification.md` |
-| README quickstart | PASS locally | Clean-checkout quickstart evidence in `docs/security/git-history-privacy-audit.md` |
-| Community health files | PASS locally | `LICENSE`, `SECURITY.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md`, `.github/CODEOWNERS` |
+| README quickstart | PASS locally | `README.md`, local release gate |
+| Maintainer docs and community files | PASS locally | `LICENSE`, `SECURITY.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md`, `.github/CODEOWNERS` |
 | Deployment, troubleshooting, roadmap docs | PASS locally | `docs/deployment.md`, `docs/troubleshooting.md`, `docs/roadmap.md` |
 | Dependency update configuration | PASS locally | `.github/dependabot.yml`, `docs/ci-and-release-gates.md` |
 
@@ -82,16 +82,16 @@ from local-only evidence:
 - GitHub-hosted CI passes.
 - Final public-release security audit changes to `PASS`.
 
-Use `docs/github-launch-runbook.md` for the exact sequence.
+Use `docs/github-launch-runbook.md` exact sequence.
 
 ## Required Final Sequence
 
 1. Run `npm run release:local-gate`.
-2. Authenticate GitHub CLI with `gh auth login` or use an authenticated GitHub web session.
-3. Inspect or create the GitHub repository with authenticated owner/org permissions.
+2. Authenticate GitHub CLI `gh auth login` or use an authenticated GitHub web session.
+3. Inspect or create GitHub repository with authenticated owner/org permissions.
 4. Push `main` without force.
 5. Wait for GitHub Actions.
 6. Record hosted CI run URL and outcome.
-7. Configure or record branch protection recommendations.
+7. Configure and record branch protection recommendations.
 8. Run one final privacy/security scan.
-9. Update `docs/security/public-release-security-audit.md` to `PASS` only if all critical and high-risk findings are resolved.
+9. Update `docs/security/public-release-security-audit.md` to `PASS` only after all critical/high-risk findings are resolved.

@@ -2,17 +2,23 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { TaskPriority, TaskStatus } from '../packages/core/src/index.js';
 import { LocalTaskDestination, MockEmailSource } from '../packages/adapters/src/index.js';
-import { classifyTextForWork, triageEmailToTaskSuggestion, approveSuggestedTask } from '../packages/triage/src/index.js';
+import {
+  approveSuggestedTask,
+  classifyTextForWork,
+  triageEmailToTaskSuggestion
+} from '../packages/triage/src/index.js';
 
 test('deterministic triage detects requested work and owner decisions', () => {
   const result = classifyTextForWork({
-    text: 'Can you make sure this is approved before Friday? The budget exception is blocking launch.'
+    text: 'Can you make sure approved before Friday? budget exception is blocking launch.'
   });
 
   assert.equal(result.containsWork, true);
   assert.equal(result.ownerDecisionRequired, true);
   assert.equal(result.priority, TaskPriority.HIGH);
   assert.equal(result.recommendedAction, 'suggest_task');
+  assert.deepEqual(result.matchedSignals, ['direct request', 'blocked work']);
+  assert.match(result.evidence, /make sure/i);
   assert.match(result.explanation, /request/i);
 });
 
@@ -22,7 +28,7 @@ test('mock email can become approved task with preserved source and duplicate pr
     subject: 'Follow up needed',
     from: 'customer@example.com',
     receivedAt: '2026-01-01T12:00:00.000Z',
-    body: 'Please follow up with the customer by Friday and send a clear answer.'
+    body: 'Please follow up customer by Friday send clear answer.'
   };
   const emailSource = new MockEmailSource([email]);
   const destination = new LocalTaskDestination();
@@ -38,10 +44,21 @@ test('mock email can become approved task with preserved source and duplicate pr
   assert.equal(suggestion.source.messageId, 'email_001');
   assert.equal(suggestion.task.status, TaskStatus.READY);
   assert.equal(suggestion.task.ownerId, 'user_owner');
+  assert.equal(suggestion.task.dueAt, '2026-01-02T17:00:00.000Z');
+  assert.equal(suggestion.explanation.source.messageId, 'email_001');
+  assert.match(suggestion.explanation.evidence, /follow up/i);
+  assert.match(suggestion.explanation.inferredOutcome, /Please follow up/i);
+  assert.equal(suggestion.explanation.owner.ownerId, 'user_owner');
+  assert.match(suggestion.explanation.owner.reason, /policy/i);
+  assert.equal(suggestion.explanation.dueDate.dueAt, '2026-01-02T17:00:00.000Z');
+  assert.match(suggestion.explanation.dueDate.reason, /Friday/i);
+  assert.equal(suggestion.explanation.priority.priority, TaskPriority.NORMAL);
+  assert.deepEqual(suggestion.explanation.uncertainties, []);
 
   const firstTask = await approveSuggestedTask(suggestion, destination, { actorId: 'user_owner' });
   const duplicateTask = await approveSuggestedTask(suggestion, destination, { actorId: 'user_owner' });
 
-  assert.equal(firstTask.id, duplicateTask.id);
+  assert.equal(firstTask.id, 'task_from_email_001');
+  assert.equal(duplicateTask.id, 'task_from_email_001');
   assert.equal((await destination.listTasks()).length, 1);
 });
