@@ -187,6 +187,30 @@ test('api exposes standalone task manager operations without integrations', asyn
   }
 });
 
+test('tasks can track reviewer approver and user relationship filters', () => {
+  const task = updateTaskDetails(createTask({
+    id: 'task_review_contract',
+    workspaceId: 'workspace_demo',
+    title: 'Review contract terms',
+    createdBy: 'user_requester',
+    ownerId: 'user_ops',
+    requestedBy: 'user_requester',
+    collaborators: ['user_finance'],
+    reviewerId: 'user_reviewer',
+    approverId: 'user_owner'
+  }), {
+    actorId: 'user_ops',
+    reviewerId: 'user_reviewer',
+    approverId: 'user_owner'
+  });
+
+  assert.equal(task.reviewerId, 'user_reviewer');
+  assert.equal(task.approverId, 'user_owner');
+  assert.deepEqual(searchTasks([task], { workspaceId: 'workspace_demo', reviewerId: 'user_reviewer' }).map((item) => item.id), ['task_review_contract']);
+  assert.deepEqual(searchTasks([task], { workspaceId: 'workspace_demo', approverId: 'user_owner' }).map((item) => item.id), ['task_review_contract']);
+  assert.deepEqual(searchTasks([task], { workspaceId: 'workspace_demo', userId: 'user_finance' }).map((item) => item.id), ['task_review_contract']);
+});
+
 async function requestJson(baseUrl, method, path, body) {
   const response = await fetch(`${baseUrl}${path}`, {
     method,

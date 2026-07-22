@@ -71,7 +71,11 @@ POST   /slack/interactions
 POST   /slack/commands
 ```
 
-Task list routes support these filters: `query`, `ownerId`, `projectId`, `listId`, `status`, `tag`, `dueBefore`, `dueAfter`, and `includeArchived=true`.
+Task list routes support these filters: `query`, `ownerId`, `reviewerId`,
+`approverId`, `userId`, `projectId`, `listId`, `status`, `tag`, `dueBefore`,
+`dueAfter`, and `includeArchived=true`. `userId` matches any related person on
+the task, including owner, requester, reviewer, approver, collaborator,
+waiting-on, or subtask owner.
 
 ## Example Flow
 

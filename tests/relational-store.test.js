@@ -58,6 +58,8 @@ test('relational store persists task lifecycle graph transactionally', async () 
     title: 'Prepare launch review',
     createdBy: 'user_owner',
     ownerId: 'user_ops',
+    reviewerId: 'user_reviewer',
+    approverId: 'user_owner',
     sourceType: 'email',
     sourceReference: 'email_demo_001',
     tags: ['launch']
@@ -81,6 +83,8 @@ test('relational store persists task lifecycle graph transactionally', async () 
 
   assert.deepEqual(activeOnly, []);
   assert.equal(archived.length, 1);
+  assert.equal(archived[0].reviewerId, 'user_reviewer');
+  assert.equal(archived[0].approverId, 'user_owner');
   assert.equal(archived[0].comments[0].body, 'Keep the review short.');
   assert.equal(archived[0].subtasks[0].title, 'Write outline');
   assert.ok(archived[0].history.some((event) => event.eventType === 'task.archived'));
@@ -465,26 +469,28 @@ function taskRow(params) {
     created_by: params[9],
     owner_id: params[10],
     requested_by: params[11],
-    collaborators: params[12],
-    status: params[13],
-    priority: params[14],
-    due_at: params[15],
-    start_at: params[16],
-    completed_at: params[17],
-    blocked_reason: params[18],
-    waiting_on: params[19],
-    project_id: params[20],
-    list_id: params[21],
-    parent_task_id: params[22],
-    tags: params[23],
-    owner_decision_required: params[24],
-    owner_decision_reason: params[25],
-    confidence: params[26],
-    recurrence: params[27],
-    archived_at: params[28],
-    version: params[29],
-    created_at: params[30],
-    updated_at: params[31]
+    reviewer_id: params[12],
+    approver_id: params[13],
+    collaborators: params[14],
+    status: params[15],
+    priority: params[16],
+    due_at: params[17],
+    start_at: params[18],
+    completed_at: params[19],
+    blocked_reason: params[20],
+    waiting_on: params[21],
+    project_id: params[22],
+    list_id: params[23],
+    parent_task_id: params[24],
+    tags: params[25],
+    owner_decision_required: params[26],
+    owner_decision_reason: params[27],
+    confidence: params[28],
+    recurrence: params[29],
+    archived_at: params[30],
+    version: params[31],
+    created_at: params[32],
+    updated_at: params[33]
   };
 }
 

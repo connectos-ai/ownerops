@@ -387,17 +387,17 @@ async function upsertTask(client, task) {
   await client.query(
     `INSERT INTO tasks (
        id, workspace_id, title, description, desired_outcome, notes, source_type, source_reference,
-       source_url, created_by, owner_id, requested_by, collaborators, status, priority, due_at,
+source_url, created_by, owner_id, requested_by, reviewer_id, approver_id, collaborators, status, priority, due_at,
        start_at, completed_at, blocked_reason, waiting_on, project_id, list_id, parent_task_id,
        tags, owner_decision_required, owner_decision_reason, confidence, recurrence, archived_at,
        version, created_at, updated_at
      )
      VALUES (
        $1, $2, $3, $4, $5, $6, $7, $8,
-       $9, $10, $11, $12, $13, $14, $15, $16,
-       $17, $18, $19, $20, $21, $22, $23,
-       $24, $25, $26, $27, $28, $29,
-       $30, $31, $32
+$9, $10, $11, $12, $13, $14, $15, $16,
+$17, $18, $19, $20, $21, $22, $23,
+$24, $25, $26, $27, $28, $29,
+$30, $31, $32, $33, $34
      )
      ON CONFLICT (workspace_id, id) DO UPDATE SET
        title = EXCLUDED.title,
@@ -408,8 +408,10 @@ async function upsertTask(client, task) {
        source_reference = EXCLUDED.source_reference,
        source_url = EXCLUDED.source_url,
        owner_id = EXCLUDED.owner_id,
-       requested_by = EXCLUDED.requested_by,
-       collaborators = EXCLUDED.collaborators,
+requested_by = EXCLUDED.requested_by,
+reviewer_id = EXCLUDED.reviewer_id,
+approver_id = EXCLUDED.approver_id,
+collaborators = EXCLUDED.collaborators,
        status = EXCLUDED.status,
        priority = EXCLUDED.priority,
        due_at = EXCLUDED.due_at,
@@ -439,9 +441,11 @@ async function upsertTask(client, task) {
       task.sourceReference || null,
       task.sourceUrl || '',
       task.createdBy || 'system',
-      task.ownerId || 'unassigned',
-      task.requestedBy || '',
-      toJson(task.collaborators || []),
+task.ownerId || 'unassigned',
+task.requestedBy || '',
+task.reviewerId || '',
+task.approverId || '',
+toJson(task.collaborators || []),
       task.status,
       task.priority,
       task.dueAt || null,
@@ -544,6 +548,8 @@ async function hydrateTask(client, row) {
     createdBy: row.created_by,
     ownerId: row.owner_id,
     requestedBy: row.requested_by || '',
+    reviewerId: row.reviewer_id || '',
+    approverId: row.approver_id || '',
     collaborators: parseJson(row.collaborators, []),
     status: row.status,
     priority: row.priority,

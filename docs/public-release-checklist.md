@@ -9,6 +9,8 @@ OwnerOps may not be published until every item is complete.
 - [x] Workspace, member, project, list setup available in standalone web app.
 - [x] Workspace user invitation, role/status lifecycle, privacy-safe identity
       mapping, and deactivation API tested.
+- [x] Task requester, reviewer, approver, collaborator, and related-user
+      filtering tested while preserving one accountable owner.
 - [x] Relational schema, adapter, migration runner documented without requiring database service for local JSON use.
 - [x] Slack Free native templates usable manually.
 - [x] Slack paid templates are documented accurately.

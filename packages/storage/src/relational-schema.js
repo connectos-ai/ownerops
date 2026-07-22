@@ -104,6 +104,8 @@ CREATE TABLE IF NOT EXISTS tasks (
   created_by TEXT NOT NULL,
   owner_id TEXT NOT NULL,
   requested_by TEXT,
+  reviewer_id TEXT,
+  approver_id TEXT,
   collaborators JSONB NOT NULL DEFAULT '[]'::jsonb,
   status TEXT NOT NULL,
   priority TEXT NOT NULL,

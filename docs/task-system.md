@@ -54,6 +54,15 @@ OwnerOps starts as a task manager before it becomes an integration system.
 - Generate recurring task instances from an existing task template.
 - Prevent accidental duplicate creation using source IDs or idempotency keys.
 
+## Task Relationships
+
+Every task keeps one accountable `ownerId`. It may also include `requestedBy`,
+`reviewerId`, `approverId`, `collaborators`, and `waitingOn` so teams can
+review work by the person who requested it, who reviews it, who approves it,
+who helps with it, or who is blocking it. Task search supports `ownerId`,
+`reviewerId`, `approverId`, and `userId`; `userId` matches any related person
+on the task.
+
 ## Workspace Users
 
 Workspace users can be `admin`, `member`, or `guest`, and may be `invited`,

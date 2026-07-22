@@ -177,6 +177,8 @@ export function createTask(input) {
     createdBy: cleanRequired(input?.createdBy || 'system', 'createdBy'),
     ownerId: cleanOptional(input?.ownerId || 'unassigned'),
     requestedBy: cleanOptional(input?.requestedBy),
+    reviewerId: cleanOptional(input?.reviewerId),
+    approverId: cleanOptional(input?.approverId),
     collaborators: normalizeStringList(input?.collaborators),
     status: normalizeStatus(input?.status || TaskStatus.INBOX),
     priority: normalizePriority(input?.priority || TaskPriority.NORMAL),
@@ -237,6 +239,9 @@ export function updateTaskDetails(task, updates = {}) {
   if ('priority' in updates) next.priority = normalizePriority(updates.priority);
   if ('dueAt' in updates) next.dueAt = normalizeNullableTimestamp(updates.dueAt);
   if ('startAt' in updates) next.startAt = normalizeNullableTimestamp(updates.startAt);
+  if ('requestedBy' in updates) next.requestedBy = cleanOptional(updates.requestedBy);
+  if ('reviewerId' in updates) next.reviewerId = cleanOptional(updates.reviewerId);
+  if ('approverId' in updates) next.approverId = cleanOptional(updates.approverId);
   if ('projectId' in updates) next.projectId = cleanOptional(updates.projectId) || null;
   if ('listId' in updates) next.listId = cleanOptional(updates.listId) || null;
   if ('tags' in updates) next.tags = normalizeStringList(updates.tags);
@@ -465,6 +470,9 @@ export function searchTasks(tasks, filters = {}) {
     if (filters.workspaceId && task.workspaceId !== filters.workspaceId) return false;
     if (!includeArchived && task.archivedAt) return false;
     if (filters.ownerId && task.ownerId !== filters.ownerId) return false;
+    if (filters.reviewerId && task.reviewerId !== filters.reviewerId) return false;
+    if (filters.approverId && task.approverId !== filters.approverId) return false;
+    if (filters.userId && !taskTouchesUser(task, filters.userId)) return false;
     if (filters.projectId && task.projectId !== filters.projectId) return false;
     if (filters.listId && task.listId !== filters.listId) return false;
     if (statuses.length && !statuses.includes(task.status)) return false;
@@ -665,6 +673,20 @@ function countBy(items, key) {
     counts[value] = (counts[value] || 0) + 1;
     return counts;
   }, {});
+}
+
+function taskTouchesUser(task, userId) {
+  const id = cleanOptional(userId);
+  if (!id) return true;
+  return [
+    task.ownerId,
+    task.requestedBy,
+    task.reviewerId,
+    task.approverId,
+    task.waitingOn,
+    ...(task.collaborators || []),
+    ...(task.subtasks || []).map((subtask) => subtask.ownerId)
+  ].some((value) => cleanOptional(value) === id);
 }
 
 function recommendedNextMove(tasks) {

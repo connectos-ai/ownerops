@@ -563,6 +563,9 @@ function queryFilters(url) {
   return {
     query: url.searchParams.get('query') || url.searchParams.get('q') || undefined,
     ownerId: url.searchParams.get('ownerId') || undefined,
+    reviewerId: url.searchParams.get('reviewerId') || undefined,
+    approverId: url.searchParams.get('approverId') || undefined,
+    userId: url.searchParams.get('userId') || undefined,
     projectId: url.searchParams.get('projectId') || undefined,
     listId: url.searchParams.get('listId') || undefined,
     status: url.searchParams.get('status') || undefined,

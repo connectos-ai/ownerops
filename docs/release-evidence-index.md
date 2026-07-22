@@ -22,6 +22,7 @@ GitHub-hosted CI, and final public-release security audit pass.
 | --- | --- | --- |
 | Standalone task manager works without Slack, email, AI, DoBoth, or ConnectOS | PASS locally | `docs/product-verification.md`, `docs/browser-accessibility-verification.md`, `tests/api-vertical-slice.test.js`, `tests/standalone-task-manager.test.js`, `tests/core-workspace.test.js` |
 | Workspace user lifecycle and identity mapping | PASS locally | `docs/task-system.md`, `docs/api.md`, `tests/workspace-setup.test.js` |
+| Task reviewer approver and related-user filtering | PASS locally | `docs/task-system.md`, `docs/api.md`, `tests/standalone-task-manager.test.js`, `tests/relational-store.test.js` |
 | Slack Free native templates usable manually | PASS locally | `docs/slack-capability-matrix.md`, `docs/slack-native-starter-guide.md`, `templates/slack-free/` |
 | Slack paid templates documented accurately | PASS locally | `docs/slack-capability-matrix.md`, `docs/slack-paid-enhancements.md`, `templates/slack-paid/` |
 | Enhanced Slack app mode optional | PASS locally | `docs/slack-enhanced-app.md`, `docs/architecture.md`, `tests/slack-signing-interactions.test.js` |
