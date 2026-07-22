@@ -42,6 +42,7 @@ GitHub-hosted CI, and final public-release security audit pass.
 | Gate | Status | Evidence |
 | --- | --- | --- |
 | Working tree scan | PASS locally | `scripts/public-release-audit.sh`, local audit results |
+| Structured public release security audit report | FAIL pending GitHub gates | `docs/security/public-release-security-audit.md` |
 | Git history scan | PASS locally | `docs/security/git-history-privacy-audit.md` |
 | Author/committer metadata reviewed | PASS locally | `docs/security/git-history-privacy-audit.md`, `npm run release:local-gate` |
 | No private remotes | PASS locally | `docs/security/git-history-privacy-audit.md`, `npm run release:local-gate` |
