@@ -10,6 +10,7 @@ import {
   createTaskList,
   createWorkspace,
   deactivateWorkspaceUser,
+  mergeDuplicateTask,
   reopenTask,
   searchTasks,
   updateWorkspaceUser
@@ -139,6 +140,19 @@ export class InMemoryOwnerOpsStore {
     this.suggestions.set(suggestion.id, suggestion);
     this.persist();
     return suggestion;
+  }
+
+  updateSuggestion(suggestion) {
+    this.getSuggestion(suggestion.workspaceId || suggestion.task?.workspaceId, suggestion.id);
+    this.suggestions.set(suggestion.id, suggestion);
+    this.persist();
+    return suggestion;
+  }
+
+  mergeDuplicateTask(workspaceId, duplicateTaskId, canonicalTaskId, input = {}) {
+    const duplicateTask = this.getTask(workspaceId, duplicateTaskId);
+    const canonicalTask = this.getTask(workspaceId, canonicalTaskId);
+    return this.updateTask(mergeDuplicateTask(duplicateTask, canonicalTask, input));
   }
 
   hasProcessedSlackAction(idempotencyKey) {

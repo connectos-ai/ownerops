@@ -89,6 +89,18 @@ export async function approveSuggestedTask(suggestion, taskDestination, options 
   return taskDestination.createTask(task);
 }
 
+export function rejectSuggestedTask(suggestion, options = {}) {
+  const rejectedAt = new Date(options.rejectedAt || Date.now()).toISOString();
+  return {
+    ...suggestion,
+    status: 'REJECTED',
+    rejectedAt,
+    rejectedBy: cleanRequired(options.actorId || 'system', 'actorId'),
+    rejectionReason: cleanOptional(options.reason || 'Not actionable.'),
+    updatedAt: rejectedAt
+  };
+}
+
 function inferOutcome(text) {
   const sentence = firstSentence(text);
   return sentence ? `Requested outcome: ${sentence}` : 'Requested outcome is captured from the source message.';
@@ -102,4 +114,8 @@ function cleanRequired(value, name) {
   const text = String(value || '').trim();
   if (!text) throw new Error(`${name} is required`);
   return text;
+}
+
+function cleanOptional(value) {
+  return String(value || '').trim();
 }

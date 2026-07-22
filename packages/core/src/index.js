@@ -43,6 +43,7 @@ export const EventType = Object.freeze({
   TASK_REOPENED: 'task.reopened',
   TASK_CANCELLED: 'task.cancelled',
   TASK_ARCHIVED: 'task.archived',
+  TASK_MERGED: 'task.merged',
   TASK_OVERDUE: 'task.overdue',
   TASK_COMMENT_ADDED: 'task.comment_added',
   TASK_SUBTASK_ADDED: 'task.subtask_added',
@@ -335,6 +336,32 @@ export function archiveTask(task, input = {}) {
     touch({ ...task, archivedAt: timestamp(input.archivedAt) }),
     EventType.TASK_ARCHIVED,
     { actorId: input.actorId || 'system' }
+  );
+}
+
+export function mergeDuplicateTask(duplicateTask, canonicalTask, input = {}) {
+  if (duplicateTask.workspaceId !== canonicalTask.workspaceId) {
+    throw new Error('Cannot merge tasks across workspaces.');
+  }
+  if (duplicateTask.id === canonicalTask.id) {
+    throw new Error('Cannot merge a task into itself.');
+  }
+  const reason = cleanOptional(input.reason || 'Duplicate task merged.');
+  return appendHistory(
+    touch({
+      ...duplicateTask,
+      status: TaskStatus.CANCELLED,
+      archivedAt: timestamp(input.archivedAt),
+      mergedIntoTaskId: canonicalTask.id,
+      mergeReason: reason
+    }),
+    EventType.TASK_MERGED,
+    {
+      actorId: input.actorId || 'system',
+      duplicateTaskId: duplicateTask.id,
+      canonicalTaskId: canonicalTask.id,
+      reason
+    }
   );
 }
 

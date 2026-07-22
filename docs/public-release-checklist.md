@@ -14,6 +14,8 @@ OwnerOps may not be published until every item is complete.
 - [x] Slack paid templates are documented accurately.
 - [x] Enhanced Slack app mode is optional.
 - [x] Email triage works through mock provider/configured provider boundary.
+- [x] Triage suggestions can be approved or rejected, and duplicate tasks can
+      be merged without deleting task history.
 - [x] Daily weekly briefs work from task data.
 - [x] DoBoth and ConnectOS are optional adapters only.
 - [x] Public event model documented.

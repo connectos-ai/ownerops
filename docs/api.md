@@ -53,12 +53,14 @@ POST   /api/tasks/:taskId/subtasks
 PATCH  /api/tasks/:taskId/subtasks/:subtaskId/status
 POST   /api/tasks/:taskId/archive
 POST   /api/tasks/:taskId/reopen
+POST   /api/tasks/:taskId/merge-duplicate
 POST   /api/tasks/:taskId/recurring-instance
 POST   /api/tasks/:taskId/owner-decision
 POST   /api/tasks/:taskId/owner-decision/resolve
 GET    /api/boards/kanban?workspaceId=:workspaceId
 POST   /api/triage/email
 POST   /api/triage/suggestions/:suggestionId/approve
+POST   /api/triage/suggestions/:suggestionId/reject
 GET    /api/briefs/daily?workspaceId=:workspaceId&now=:isoTimestamp
 GET    /api/briefs/weekly?workspaceId=:workspaceId
 GET    /slack/oauth/start?workspaceId=:workspaceId

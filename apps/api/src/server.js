@@ -32,7 +32,7 @@ import {
   verifySlackOAuthState,
   verifySlackRequest
 } from '../../../packages/slack/src/index.js';
-import { approveSuggestedTask, triageEmailToTaskSuggestion } from '../../../packages/triage/src/index.js';
+import { approveSuggestedTask, rejectSuggestedTask, triageEmailToTaskSuggestion } from '../../../packages/triage/src/index.js';
 
 export { FileOwnerOpsStore, InMemoryOwnerOpsStore };
 
@@ -365,6 +365,19 @@ async function route({ method, url, body, rawBody, headers, store, slackSigningS
       createTask: (item) => store.createTaskFromSuggestion(item)
     }, body);
     return { status: 201, body: task };
+  }
+
+  const suggestionRejectMatch = url.pathname.match(/^\/api\/triage\/suggestions\/([^/]+)\/reject$/);
+  if (method === 'POST' && suggestionRejectMatch) {
+    const suggestion = await store.getSuggestion(body.workspaceId, suggestionRejectMatch[1]);
+    return { body: await store.updateSuggestion(rejectSuggestedTask(suggestion, body)) };
+  }
+
+  const taskMergeMatch = url.pathname.match(/^\/api\/tasks\/([^/]+)\/merge-duplicate$/);
+  if (method === 'POST' && taskMergeMatch) {
+    return {
+      body: await store.mergeDuplicateTask(body.workspaceId, taskMergeMatch[1], body.canonicalTaskId, body)
+    };
   }
 
   if (method === 'GET' && url.pathname === '/api/briefs/daily') {

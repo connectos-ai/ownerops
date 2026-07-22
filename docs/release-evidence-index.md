@@ -26,6 +26,7 @@ GitHub-hosted CI, and final public-release security audit pass.
 | Slack paid templates documented accurately | PASS locally | `docs/slack-capability-matrix.md`, `docs/slack-paid-enhancements.md`, `templates/slack-paid/` |
 | Enhanced Slack app mode optional | PASS locally | `docs/slack-enhanced-app.md`, `docs/architecture.md`, `tests/slack-signing-interactions.test.js` |
 | Email triage through mock/configured provider boundary | PASS locally | `docs/product-verification.md`, `docs/email-triage.md`, `packages/triage/src/index.js`, `tests/api-vertical-slice.test.js` |
+| Triage reject and duplicate merge lifecycle | PASS locally | `docs/api.md`, `docs/task-system.md`, `tests/api-vertical-slice.test.js` |
 | Daily and weekly briefs work from task data | PASS locally | `docs/product-verification.md`, `docs/daily-brief.md`, `docs/weekly-review.md`, `tests/core-workspace.test.js` |
 | DoBoth and ConnectOS optional adapters only | PASS locally | `README.md`, `docs/architecture.md`, `docs/integration-model.md`, `packages/adapters/src/index.js` |
 | Public API/event/integration boundaries documented | PASS locally | `docs/api.md`, `docs/events.md`, `docs/integration-model.md`, `packages/adapters/src/index.js` |

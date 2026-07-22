@@ -8,6 +8,7 @@ import {
   createTaskList,
   createWorkspace,
   deactivateWorkspaceUser,
+  mergeDuplicateTask,
   reopenTask,
   searchTasks,
   updateWorkspaceUser
@@ -336,6 +337,12 @@ export class RelationalOwnerOpsStore {
     return suggestion;
   }
 
+  async updateSuggestion(suggestion) {
+    const workspaceId = suggestion.workspaceId || suggestion.task?.workspaceId;
+    await this.getSuggestion(workspaceId, suggestion.id);
+    return this.saveSuggestion(suggestion);
+  }
+
   async getSuggestion(workspaceId, suggestionId) {
     const row = await queryOne(
       this.client,
@@ -344,6 +351,13 @@ export class RelationalOwnerOpsStore {
     );
     if (!row) throw notFound('SUGGESTION_NOT_FOUND', 'Suggestion not found.');
     return parseJson(row.metadata, {});
+  }
+
+  async mergeDuplicateTask(workspaceId, duplicateTaskId, canonicalTaskId, input = {}) {
+    const duplicateTask = await this.getTask(workspaceId, duplicateTaskId);
+    const canonicalTask = await this.getTask(workspaceId, canonicalTaskId);
+    const merged = mergeDuplicateTask(duplicateTask, canonicalTask, input);
+    return this.updateTask(merged);
   }
 
   async hasProcessedSlackAction(idempotencyKey, input = {}) {

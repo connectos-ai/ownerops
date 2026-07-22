@@ -46,6 +46,8 @@ OwnerOps starts as a task manager before it becomes an integration system.
 - Mark tasks waiting or blocked with a reason.
 - Request and resolve owner decisions.
 - Complete, reopen, cancel, and archive tasks.
+- Reject non-actionable triage suggestions and merge duplicate tasks without
+  silently losing task history.
 - Preserve comments and task event history.
 - Link source message or email when available.
 - Search and filter by text, owner, project, list, status, tag, due date, and archived state.

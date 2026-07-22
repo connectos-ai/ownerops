@@ -83,6 +83,45 @@ test('api supports standalone task and mock email triage vertical slice', async 
     });
     assert.equal(duplicate.id, approved.id);
 
+    const referenceOnlySuggestion = await requestJson(baseUrl, 'POST', '/api/triage/email', {
+      workspaceId: 'workspace_demo',
+      defaultOwnerId: 'user_owner',
+      email: {
+        id: 'email_reference_only',
+        subject: 'Newsletter',
+        from: 'updates@example.com',
+        receivedAt: '2026-01-01T13:00:00.000Z',
+        body: 'This is a general update for later reading.'
+      }
+    });
+    const rejected = await requestJson(baseUrl, 'POST', `/api/triage/suggestions/${referenceOnlySuggestion.id}/reject`, {
+      workspaceId: 'workspace_demo',
+      actorId: 'user_owner',
+      reason: 'Reference only.'
+    });
+    assert.equal(rejected.status, 'REJECTED');
+    assert.equal(rejected.rejectionReason, 'Reference only.');
+
+    await requestJson(baseUrl, 'POST', '/api/tasks', {
+      id: 'task_prepare_duplicate',
+      workspaceId: 'workspace_demo',
+      title: 'Duplicate launch checklist',
+      createdBy: 'user_owner',
+      ownerId: 'user_owner',
+      sourceType: 'manual',
+      sourceReference: 'manual_duplicate_checklist'
+    });
+    const merged = await requestJson(baseUrl, 'POST', '/api/tasks/task_prepare_duplicate/merge-duplicate', {
+      workspaceId: 'workspace_demo',
+      canonicalTaskId: 'task_prepare',
+      actorId: 'user_owner',
+      reason: 'Same launch checklist work.'
+    });
+    assert.equal(merged.status, 'CANCELLED');
+    assert.equal(merged.archivedAt.length > 0, true);
+    assert.equal(merged.mergedIntoTaskId, 'task_prepare');
+    assert.equal(merged.history.at(-1).eventType, 'task.merged');
+
     const board = await requestJson(baseUrl, 'GET', '/api/boards/kanban?workspaceId=workspace_demo');
     assert.equal(board.READY.length, 2);
 
