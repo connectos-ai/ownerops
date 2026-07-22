@@ -46,4 +46,4 @@ bash scripts/public-release-audit.sh .
 
 echo
 echo "OwnerOps local release gate: PASS"
-echo "Remaining required external gates: authenticated GitHub repository inspection/creation, first push, GitHub-hosted CI evidence, and final public-release security audit PASS."
+echo "Remaining required external gates: authenticated GitHub repository inspection/creation, first push, GitHub-hosted CI evidence, branch protection evidence, and final public-release security audit PASS."
