@@ -1,8 +1,8 @@
 # OwnerOps
 
-OwnerOps is an open-source owner-operator triage task system. It helps owners, leaders, managers, pastors, and small teams turn communication into clear work: what needs to be done, who owns it, what is blocked, what is waiting, and what truly needs the owner.
+OwnerOps is an open-source owner-operator triage and task system. It helps owners, leaders, managers, pastors, and small teams turn communication into clear work: what needs to be done, who owns it, what is blocked, what is waiting, and what truly needs the owner.
 
-OwnerOps is designed to work independently. It does not require DoBoth, ConnectOS, Slack, email, or an AI model to be useful. Those capabilities can be connected later through documented adapters.
+OwnerOps is designed to work independently. It does not require DoBoth, ConnectOS, Slack, email, or an AI model to be useful. Those capabilities can be connected later through documented public APIs, webhooks, and adapters.
 
 ## What OwnerOps Does
 
@@ -30,17 +30,17 @@ Install the OwnerOps app/service for email triage, Slack commands, message short
 
 ### Level 4: Composable Operations Layer
 
-DoBoth and ConnectOS can connect to OwnerOps through public APIs, webhooks, and adapter interfaces. Neither is required.
+DoBoth and ConnectOS can connect OwnerOps through public APIs, webhooks, and adapter interfaces. Neither is required.
 
-## Relationship To DoBoth And ConnectOS
+## Standalone And Composable
 
 OwnerOps, ConnectOS, and DoBoth are independent but complementary:
 
-- OwnerOps owns work, tasks, triage, delegation, status, follow-up, and operating rhythm.
+- OwnerOps owns work triage, task state, Slack-native workflows, and owner operating rhythm.
 - ConnectOS may provide optional standardized connectors.
 - DoBoth may orchestrate broader owner outcomes using OwnerOps events and APIs.
 
-OwnerOps must remain useful when DoBoth and ConnectOS are disconnected.
+OwnerOps must remain useful when DoBoth and ConnectOS are disconnected. When they are connected, they use the same public integration surfaces available to any other project; there are no private DoBoth backdoors or hidden ConnectOS dependencies.
 
 ## Slack-Native Task Options
 
@@ -49,15 +49,15 @@ OwnerOps must remain useful when DoBoth and ConnectOS are disconnected.
 - Enhanced Slack app: use OwnerOps app integrations when you want automation.
 
 See `docs/slack-capability-matrix.md` before choosing a Slack setup.
-See `docs/slack-enhanced-app.md` for the current signed-request Slack command and interaction slice.
+See `docs/slack-enhanced-app.md` for the current signed-request Slack command interaction slice.
 
 ## Current Status
 
-This repository is being prepared as a public open-source release candidate. Do not treat it as release-ready until `docs/security/public-release-security-audit.md` reports `PASS`.
+This repository is a public open-source release candidate. Do not treat it as release-ready until `docs/security/public-release-security-audit.md` reports `PASS`.
 
 ## Quickstart
 
-Run the current local checks:
+Run current local checks:
 
 ```bash
 npm ci
@@ -97,6 +97,7 @@ See:
 - `docs/api.md`
 - `docs/self-hosting.md`
 - `docs/web-app.md`
+- `docs/browser-accessibility-verification.md`
 - `docs/storage-and-migrations.md`
 - `docs/ci-and-release-gates.md`
 - `docs/security/auth-policy.md`

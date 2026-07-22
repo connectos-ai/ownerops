@@ -13,7 +13,7 @@ OwnerOps may not be published until every item is complete.
 - [ ] Enhanced Slack app mode is optional.
 - [ ] Email triage works through mock provider configured provider.
 - [ ] Daily weekly briefs work from task data.
-- [ ] DoBoth ConnectOS optional adapters only.
+- [x] DoBoth and ConnectOS optional adapters only.
 
 ## Security And Privacy
 
@@ -36,6 +36,7 @@ OwnerOps may not be published until every item is complete.
 - [ ] Tests pass.
 - [ ] Build passes.
 - [ ] CI passes.
+- [x] Browser/accessibility verification complete for standalone web app.
 - [ ] README quickstart works.
 - [ ] License, security policy, contribution guide, code conduct present.
 
