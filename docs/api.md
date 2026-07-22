@@ -22,6 +22,16 @@ Then open:
 http://localhost:3100/healthz
 ```
 
+## Authentication
+
+Local development is open by default. For exposed self-hosted API access, set `OWNEROPS_API_TOKEN` to a long random value. When set, OwnerOps requires:
+
+```text
+Authorization: Bearer <OWNEROPS_API_TOKEN>
+```
+
+for `/api/*` routes and `/slack/oauth/start`. Slack webhook routes (`/slack/events`, `/slack/interactions`, `/slack/commands`) use Slack request signatures instead. `/slack/oauth/callback` uses signed OAuth state because Slack redirects back without custom bearer headers.
+
 ## Current Routes
 
 ```text
@@ -65,6 +75,7 @@ Create a workspace:
 
 ```bash
 curl -sS http://localhost:3100/api/workspaces \
+  -H "authorization: Bearer $OWNEROPS_API_TOKEN" \
   -H 'content-type: application/json' \
   -d '{"id":"workspace_demo","name":"Demo Team"}'
 ```

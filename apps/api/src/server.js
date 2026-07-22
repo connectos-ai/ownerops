@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { timingSafeEqual } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -45,6 +46,7 @@ export async function createConfiguredOwnerOpsServer(options = {}) {
 
 export function createOwnerOpsServer(options = {}) {
   const store = options.store || createDefaultStore(options);
+  const apiAuth = createApiAuthConfig(options);
   const slackSigningSecret = options.slackSigningSecret || process.env.OWNEROPS_SLACK_SIGNING_SECRET || '';
   const slackOAuth = createSlackOAuthConfig(options);
   const slackWebApi = createSlackWebApiConfig(options);
@@ -52,6 +54,12 @@ export function createOwnerOpsServer(options = {}) {
   const server = http.createServer(async (req, res) => {
     try {
       const url = new URL(req.url || '/', 'http://localhost');
+      requireValidApiAuthorization({
+        method: req.method || 'GET',
+        url,
+        headers: req.headers,
+        apiAuth
+      });
       const requestBody = await readRequestBody(req);
       const result = await route({
         method: req.method || 'GET',
@@ -71,10 +79,11 @@ export function createOwnerOpsServer(options = {}) {
           code: error.code || 'OWNEROPS_ERROR',
           message: error.message || 'OwnerOps request failed.'
         }
-      });
+      }, error.headers);
     }
   });
   server.ownerOpsStore = store;
+  server.ownerOpsApiAuthEnabled = apiAuth.enabled;
   return server;
 }
 
@@ -120,6 +129,11 @@ function createSlackOAuthConfig(options) {
     userScopes: provided.userScopes || parseCsv(process.env.OWNEROPS_SLACK_USER_SCOPES || ''),
     exchangeOAuthCode: provided.exchangeOAuthCode || exchangeSlackOAuthCode
   };
+}
+
+function createApiAuthConfig(options) {
+  const token = String(options.apiToken ?? process.env.OWNEROPS_API_TOKEN ?? '').trim();
+  return { enabled: token.length > 0, token };
 }
 
 function createSlackWebApiConfig(options) {
@@ -402,6 +416,31 @@ async function handleSlackOAuthCallback({ url, store, slackOAuth }) {
   };
 }
 
+function requireValidApiAuthorization({ method, url, headers, apiAuth }) {
+  if (!apiAuth.enabled || !requiresApiAuthorization(method, url)) return;
+  const authorization = String(headers.authorization || '');
+  const prefix = 'Bearer ';
+  if (!authorization.startsWith(prefix) || !constantTimeEqual(authorization.slice(prefix.length), apiAuth.token)) {
+    const error = new Error('OwnerOps API token required.');
+    error.statusCode = 401;
+    error.code = 'OWNEROPS_API_UNAUTHORIZED';
+    error.headers = { 'www-authenticate': 'Bearer realm="ownerops-api"' };
+    throw error;
+  }
+}
+
+function requiresApiAuthorization(method, url) {
+  if (url.pathname.startsWith('/api/')) return true;
+  if (method === 'GET' && url.pathname === '/slack/oauth/start') return true;
+  return false;
+}
+
+function constantTimeEqual(left, right) {
+  const leftBuffer = Buffer.from(String(left));
+  const rightBuffer = Buffer.from(String(right));
+  return leftBuffer.length === rightBuffer.length && timingSafeEqual(leftBuffer, rightBuffer);
+}
+
 async function readRequestBody(req) {
   if (!['POST', 'PATCH', 'PUT'].includes(req.method || 'GET')) return {};
   let raw = '';
@@ -457,8 +496,8 @@ function parseCsv(value) {
     .filter(Boolean);
 }
 
-function sendJson(res, status, body) {
-  res.writeHead(status, { 'content-type': 'application/json; charset=utf-8' });
+function sendJson(res, status, body, headers = {}) {
+  res.writeHead(status, { ...headers, 'content-type': 'application/json; charset=utf-8' });
   res.end(JSON.stringify(body));
 }
 

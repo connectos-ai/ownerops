@@ -14,6 +14,18 @@ Open standalone task manager at `http://localhost:3100/`. The web app uses same 
 
 `data/` directory is intentionally ignored by git. Do not commit runtime data, backups, logs, database dumps, or environment files.
 
+## API Protection
+
+Keep local-only trials private by binding OwnerOps to trusted networks. For exposed self-hosted API access, set a long random `OWNEROPS_API_TOKEN`:
+
+```bash
+OWNEROPS_API_TOKEN=replace-with-long-random-value OWNEROPS_PORT=3100 node apps/api/src/server.js
+```
+
+Then send `Authorization: Bearer <token>` on `/api/*` requests. Slack webhook routes still require Slack signed requests, and Slack OAuth callback uses signed state.
+
+The dependency-free static web app does not store API bearer tokens. For production browser access, place OwnerOps behind private network access or a reverse proxy that handles user authentication before traffic reaches the app.
+
 ## Back Up Data
 
 ```bash

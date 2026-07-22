@@ -74,6 +74,8 @@ OWNEROPS_PORT=3100 node apps/api/src/server.js
 
 For local persistence, add `OWNEROPS_DATA_FILE=data/ownerops.json`.
 
+For exposed self-hosted API access, set `OWNEROPS_API_TOKEN` and send `Authorization: Bearer <token>` on `/api/*` requests.
+
 For PostgreSQL persistence, opt in explicitly:
 
 ```bash
@@ -97,6 +99,7 @@ See:
 - `docs/web-app.md`
 - `docs/storage-and-migrations.md`
 - `docs/ci-and-release-gates.md`
+- `docs/security/auth-policy.md`
 - `docs/slack-enhanced-app.md`
 - `docs/permissions-and-scopes.md`
 - `docs/task-system.md`

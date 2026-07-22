@@ -24,6 +24,7 @@ OwnerOps may not be published until every item is complete.
 - [ ] No `.env`, backups, logs, runtime data.
 - [ ] No real personal, client, church, Slack, Gmail, machine details.
 - [ ] No secrets secret-shaped values.
+- [x] HTTP API auth policy reviewed.
 - [ ] Dependency audit reviewed.
 - [x] Database backup/restore procedure reviewed.
 - [ ] `docs/security/public-release-security-audit.md` says `PASS`.

@@ -84,6 +84,10 @@ Potential implementations include direct Slack, direct Gmail, Microsoft Graph, m
 
 Slack request verification and interaction parsing live in `packages/slack`. The API app exposes `/slack/events` and `/slack/interactions`, but task updates still go through the canonical core task model and storage layer. Slack-specific payloads must not leak into core task logic.
 
+## Auth Boundary
+
+OwnerOps local development is open by default. Self-hosted deployments can set `OWNEROPS_API_TOKEN` to require bearer-token authorization on `/api/*` routes and `/slack/oauth/start`. Slack webhooks remain guarded by Slack request signatures, and OAuth callback uses signed state because Slack redirects cannot include custom bearer headers. The static web app does not store bearer tokens; production browser access should use private networking or reverse-proxy authentication.
+
 ## Storage Boundary
 
 OwnerOps can run from the local JSON store for development and trials. Production persistence uses versioned SQL migrations in `packages/storage/src/relational-schema.js`, the async relational store in `packages/storage/src/relational-store.js`, and optional PostgreSQL wiring in `packages/storage/src/postgres.js`.
