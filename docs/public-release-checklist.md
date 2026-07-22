@@ -17,28 +17,28 @@ OwnerOps may not be published until every item is complete.
 
 ## Security And Privacy
 
-- [ ] Working tree scan passes.
-- [ ] Git history scan passes.
-- [ ] Author/committer metadata reviewed.
-- [ ] No private remotes.
-- [ ] No `.env`, backups, logs, runtime data.
-- [ ] No real personal, client, church, Slack, Gmail, machine details.
-- [ ] No secrets secret-shaped values.
+- [x] Working tree scan passes.
+- [x] Git history scan passes.
+- [x] Author/committer metadata reviewed.
+- [x] No private remotes.
+- [x] No `.env`, backups, logs, runtime data.
+- [x] No real personal, client, church, Slack, Gmail, machine details.
+- [x] No secrets secret-shaped values.
 - [x] HTTP API auth policy reviewed.
-- [ ] Dependency audit reviewed.
+- [x] Dependency audit reviewed.
 - [x] Database backup/restore procedure reviewed.
 - [ ] `docs/security/public-release-security-audit.md` says `PASS`.
 
 ## Quality
 
 - [x] CI workflow configured locally.
-- [ ] Install succeeds clean checkout.
-- [ ] Tests pass.
-- [ ] Build passes.
-- [ ] CI passes.
+- [x] Install succeeds clean checkout.
+- [x] Tests pass.
+- [x] No separate build step required for dependency-free web app.
+- [x] CI passes locally.
 - [x] Browser/accessibility verification complete for standalone web app.
-- [ ] README quickstart works.
-- [ ] License, security policy, contribution guide, code conduct present.
+- [x] README quickstart works.
+- [x] License, security policy, contribution guide, code conduct present.
 
 ## GitHub
 

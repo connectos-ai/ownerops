@@ -101,6 +101,7 @@ See:
 - `docs/storage-and-migrations.md`
 - `docs/ci-and-release-gates.md`
 - `docs/security/auth-policy.md`
+- `docs/security/git-history-privacy-audit.md`
 - `docs/slack-enhanced-app.md`
 - `docs/permissions-and-scopes.md`
 - `docs/task-system.md`
