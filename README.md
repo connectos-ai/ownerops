@@ -74,6 +74,12 @@ OWNEROPS_PORT=3100 node apps/api/src/server.js
 
 For local persistence, add `OWNEROPS_DATA_FILE=data/ownerops.json`.
 
+For PostgreSQL persistence, opt in explicitly:
+
+```bash
+OWNEROPS_STORAGE=postgres DATABASE_URL=postgres://ownerops:change-me@localhost:5432/ownerops node apps/api/src/server.js
+```
+
 Then visit `http://localhost:3100/` for the standalone task manager or `http://localhost:3100/healthz` for the health check.
 
 See:

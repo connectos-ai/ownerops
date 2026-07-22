@@ -1,6 +1,6 @@
 # Self-Hosting
 
-OwnerOps can currently run as a local HTTP API with in-memory storage or a portable JSON file store. This is useful for development and small self-hosted trials. The public candidate now also includes the production relational storage adapter and migration runner, but the HTTP server is not wired to use that async adapter by default yet.
+OwnerOps can run as a local HTTP API with in-memory storage, a portable JSON file store, or an explicitly selected PostgreSQL-compatible store. The default remains local and project-relative so new contributors can try OwnerOps without running a database.
 
 ## Local Persistent Mode
 
@@ -44,4 +44,12 @@ Run relational migrations:
 DATABASE_URL=postgres://ownerops:change-me@localhost:5432/ownerops npm run db:migrate
 ```
 
-Production self-hosting still needs default database-backed server runtime selection plus database backup/restore procedures before public release `PASS`.
+Run the API with the database store:
+
+```bash
+OWNEROPS_STORAGE=postgres DATABASE_URL=postgres://ownerops:change-me@localhost:5432/ownerops node apps/api/src/server.js
+```
+
+`DATABASE_URL` alone does not switch local development into database mode. Set `OWNEROPS_STORAGE=postgres` intentionally when you want the server to use PostgreSQL.
+
+Production self-hosting still needs database backup/restore procedures before public release `PASS`.

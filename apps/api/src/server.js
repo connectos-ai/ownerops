@@ -14,7 +14,7 @@ import {
   resolveOwnerDecision,
   updateTaskDetails
 } from '../../../packages/core/src/index.js';
-import { FileOwnerOpsStore, InMemoryOwnerOpsStore } from '../../../packages/storage/src/index.js';
+import { FileOwnerOpsStore, InMemoryOwnerOpsStore, createPostgresOwnerOpsStore } from '../../../packages/storage/src/index.js';
 import {
   buildSlackOAuthAuthorizeUrl,
   createSlackInstallationFromOAuth,
@@ -34,6 +34,14 @@ import {
 import { approveSuggestedTask, triageEmailToTaskSuggestion } from '../../../packages/triage/src/index.js';
 
 export { FileOwnerOpsStore, InMemoryOwnerOpsStore };
+
+export async function createConfiguredOwnerOpsServer(options = {}) {
+  const configured = await createConfiguredStore(options);
+  const server = createOwnerOpsServer({ ...options, store: configured.store });
+  server.ownerOpsStorageMode = configured.mode;
+  server.ownerOpsClose = configured.close;
+  return server;
+}
 
 export function createOwnerOpsServer(options = {}) {
   const store = options.store || createDefaultStore(options);
@@ -75,6 +83,29 @@ function createDefaultStore(options) {
     return new FileOwnerOpsStore({ filePath: options.filePath || process.env.OWNEROPS_DATA_FILE });
   }
   return new InMemoryOwnerOpsStore();
+}
+
+async function createConfiguredStore(options) {
+  if (options.store) {
+    return { mode: 'custom', store: options.store, close: async () => {} };
+  }
+
+  const storageMode = String(options.storage || process.env.OWNEROPS_STORAGE || '').trim().toLowerCase();
+  if (['postgres', 'postgresql', 'database'].includes(storageMode)) {
+    const createStore = options.createPostgresOwnerOpsStore || createPostgresOwnerOpsStore;
+    const configured = await createStore({
+      connectionString: options.databaseUrl || process.env.DATABASE_URL,
+      poolOptions: options.poolOptions
+    });
+    if (options.migrate !== false) await configured.store.migrate();
+    return {
+      mode: 'postgres',
+      store: configured.store,
+      close: configured.close || (async () => {})
+    };
+  }
+
+  return { mode: process.env.OWNEROPS_DATA_FILE || options.filePath ? 'file' : 'memory', store: createDefaultStore(options), close: async () => {} };
 }
 
 function createSlackOAuthConfig(options) {
@@ -489,7 +520,14 @@ function notFound(code, message) {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const port = Number.parseInt(process.env.OWNEROPS_PORT || '3100', 10);
-  createOwnerOpsServer().listen(port, () => {
+  const server = await createConfiguredOwnerOpsServer();
+  server.listen(port, () => {
     console.log(`OwnerOps API listening on ${port}`);
   });
+  const shutdown = async () => {
+    await server.ownerOpsClose?.();
+    server.close(() => process.exit(0));
+  };
+  process.once('SIGINT', shutdown);
+  process.once('SIGTERM', shutdown);
 }

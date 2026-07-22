@@ -31,6 +31,16 @@ DATABASE_URL=postgres://ownerops:change-me@localhost:5432/ownerops npm run db:mi
 
 The runner creates the migration tracking table first, applies only pending migrations, runs inside a transaction, records each applied version, and rolls back if a migration fails.
 
+## Database Runtime
+
+Run the API with PostgreSQL persistence by explicitly selecting the storage mode:
+
+```bash
+OWNEROPS_STORAGE=postgres DATABASE_URL=postgres://ownerops:change-me@localhost:5432/ownerops node apps/api/src/server.js
+```
+
+`DATABASE_URL` alone does not change local JSON or in-memory behavior. This keeps OwnerOps simple for standalone local use while allowing production deployments to opt into the relational store deliberately.
+
 ## Relational Store
 
 `RelationalOwnerOpsStore` accepts an injected SQL client with a `query(sql, params)` method and optional `connect()` or `transaction(fn)` support. This keeps the core storage boundary testable without requiring contributors to run PostgreSQL for every local test.
@@ -55,6 +65,5 @@ Current relational store coverage includes:
 
 Before public release gate can pass, OwnerOps still needs:
 
-- Default database-backed server runtime selection.
 - Database backup restore documentation and restore-test.
 - Hosted CI evidence schema checks run cleanly.
