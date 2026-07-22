@@ -12,7 +12,7 @@ Latest product/security content checkpoint inspected before this evidence-only
 audit update:
 
 ```text
-38ea7676048773bb8ed4a7cbddabfe81fb03c3f3
+58e505136a137b15c66a52eff75aa656c3a7062b
 ```
 
 This audit file is committed as evidence after the scan. Verify the current
@@ -21,17 +21,15 @@ checkout with `git rev-parse HEAD` before publication.
 Reachable history inspected:
 
 ```text
-46 commits on main after this evidence update
+48 commits on main after this evidence update
 ```
 
 Object database note:
 
 - `git fsck --full --no-reflogs` reported three dangling local commits and
-several dangling blobs.
-- Dangling objects are not reachable from `main` and are not part of a normal
-  push.
-- Dangling commits use generic maintainer metadata and are unreachable from
-`main`.
+  several dangling blobs.
+- Dangling objects are not reachable from `main` and are not part of a normal push.
+- Dangling commits use generic maintainer metadata and are unreachable from `main`.
 - Dangling-object sensitive scans found no private/client identifiers,
 local machine paths, or high-risk token-shaped secret patterns.
 
