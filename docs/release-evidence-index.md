@@ -49,6 +49,7 @@ This index points maintainers to the evidence gathered for the public OwnerOps r
 | Tests pass | PASS locally | `npm test` |
 | No separate build step required | PASS locally | Dependency-free web app documented in `docs/web-app.md` |
 | Local CI passes | PASS locally | `npm run ci` |
+| Local release gate command | PASS locally | `npm run release:local-gate` |
 | Browser/accessibility verification | PASS locally | `docs/browser-accessibility-verification.md` |
 | README quickstart | PASS locally | Clean-checkout quickstart evidence in `docs/security/git-history-privacy-audit.md` |
 | Community health files | PASS locally | `LICENSE`, `SECURITY.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md` |
@@ -69,7 +70,7 @@ Use `docs/github-launch-runbook.md` for the exact sequence.
 
 ## Required Final Sequence
 
-1. Run all local pre-publish checks in `docs/github-launch-runbook.md`.
+1. Run `npm run release:local-gate`.
 2. Inspect or create the GitHub repository with authenticated owner/org permissions.
 3. Push `main` without force.
 4. Wait for GitHub Actions.

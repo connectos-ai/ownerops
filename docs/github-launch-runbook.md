@@ -35,6 +35,14 @@ Open-source owner-operator triage Slack-native task system.
 Before creating or pushing the repository, run:
 
 ```bash
+npm run release:local-gate
+```
+
+The command above runs the local gate and refuses to pass with a dirty working tree, a non-`main` branch, or configured remotes.
+
+Equivalent manual commands:
+
+```bash
 npm ci
 npm run ci
 bash scripts/public-release-audit.sh .

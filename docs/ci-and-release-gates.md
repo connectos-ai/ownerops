@@ -9,6 +9,7 @@ Run the same core checks locally:
 ```bash
 npm ci
 npm run ci
+npm run release:local-gate
 ```
 
 `npm run ci` runs:
@@ -17,6 +18,8 @@ npm run ci
 - Public release audit script.
 - Full test suite.
 - High-severity dependency audit.
+
+`npm run release:local-gate` refuses to pass with a dirty working tree, a non-`main` branch, or configured remotes, then runs local CI, whitespace checks, and the public release audit.
 
 ## GitHub Actions
 
