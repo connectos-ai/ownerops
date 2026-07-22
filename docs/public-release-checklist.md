@@ -29,6 +29,7 @@ OwnerOps may not be published until every item is complete.
 - [x] No real personal, client, church, Slack, Gmail, machine details.
 - [x] No secrets or secret-shaped values.
 - [x] HTTP API auth policy reviewed.
+- [x] Privacy-conscious log redaction utility tested.
 - [x] Dependency audit reviewed.
 - [x] Database backup/restore procedure reviewed.
 - [ ] `docs/security/public-release-security-audit.md` says `PASS`.

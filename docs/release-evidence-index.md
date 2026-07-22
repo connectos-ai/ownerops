@@ -43,6 +43,7 @@ GitHub-hosted CI, and final public-release security audit pass.
 | No real personal, client, Slack, Gmail, or machine details | PASS locally | `docs/security/git-history-privacy-audit.md`, public/private audit scans |
 | No secret-shaped values | PASS locally | `docs/security/git-history-privacy-audit.md`, `scripts/public-release-audit.sh` |
 | HTTP API auth policy reviewed | PASS locally | `docs/security/auth-policy.md`, `tests/api-auth.test.js` |
+| Privacy-conscious log redaction utility tested | PASS locally | `packages/observability/src/index.js`, `tests/observability-redaction.test.js` |
 | Dependency audit reviewed | PASS locally | `npm audit --audit-level=high`, `npm run ci` |
 | Database backup/restore procedure reviewed | PASS locally | `docs/storage-and-migrations.md`, database backup/restore tests |
 | Threat model and data handling documented | PASS locally | `docs/security/threat-model.md`, `docs/security/data-handling.md` |

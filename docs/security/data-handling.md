@@ -14,6 +14,20 @@ decisions, Slack data, email data, provider credentials, and backups as sensitiv
 | Logs | request IDs, event names, durations, error classes | No full message bodies, tokens, prompts, or credentials |
 | Backups | JSON snapshots, PostgreSQL dumps | Store outside git; checksum; restore-test before moves |
 
+## Log Redaction
+
+`packages/observability/src/index.js` provides dependency-free helpers for safe
+log event shaping:
+
+- `redactString(value)` removes common secret-shaped values and email addresses.
+- `redactLogValue(value)` recursively redacts sensitive keys such as tokens,
+  cookies, authorization headers, message bodies, prompts, attachments, and
+  database URLs.
+- `createSafeLogEvent(event)` preserves operational metadata while redacting
+  payload data.
+
+Coverage lives in `tests/observability-redaction.test.js`.
+
 ## Collection Principles
 
 - Collect only what task triage, assignment, follow-up, and brief generation need.

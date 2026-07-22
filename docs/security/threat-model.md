@@ -33,7 +33,7 @@ Scope: public OwnerOps release candidate.
 | Spoofing | Fake API caller or fake Slack request mutates tasks | Optional `OWNEROPS_API_TOKEN`; Slack signature verification; signed OAuth state | First-party user auth and role checks |
 | Tampering | Retry or forged event changes task state twice | Slack idempotency tests; source duplicate protection; workspace-scoped records | Webhook signing when event delivery is added |
 | Repudiation | User denies task or decision change | Task history and events in core model | Richer audit export and admin view |
-| Information disclosure | Email, Slack, token, or prompt leaks through logs or public repo | Public audit script; encrypted token records; data-handling rules | Dedicated redaction utility tests |
+| Information disclosure | Email, Slack, token, or prompt leaks through logs or public repo | Public audit script; encrypted token records; data-handling rules; redaction utility tests | More integration points should call redaction helpers as logging grows |
 | Denial of service | Large payloads or repeated requests overwhelm local API | Slack timing/idempotency design; small dependency surface | Rate limits for exposed deployments |
 | Elevation of privilege | Cross-workspace request mutates another workspace | Workspace-scoped store and Slack team mapping tests | Full role-based authorization |
 
