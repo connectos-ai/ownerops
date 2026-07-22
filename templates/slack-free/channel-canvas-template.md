@@ -2,6 +2,8 @@
 
 Copy this into the canvas for `#ownerops-inbox` or a team operations channel.
 
+Free Slack workspaces support one canvas for each channel or DM. Treat this canvas as a working index, not the only durable task archive.
+
 ## Purpose
 
 This channel captures work, decisions, blocked items, and follow-up so important work does not disappear in chat.
@@ -58,3 +60,4 @@ NEXT ACTION:
 - Updates stay in the task thread.
 - Blocked work must include why it is blocked and who can unblock it.
 - Owner decisions should state the smallest decision needed.
+- Important work should also be captured in OwnerOps or another durable system if the team needs history beyond Slack Free limits.

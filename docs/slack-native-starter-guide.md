@@ -8,6 +8,18 @@ This guide lets a team use OwnerOps conventions in Slack without installing the 
 - Small teams that need a simple operating rhythm.
 - Teams that want to try OwnerOps before connecting integrations.
 
+## Verified Slack Free Boundaries
+
+Official Slack documentation currently says Free workspaces have access to the most recent 90 days of message and file history, channel and DM canvases only, and up to 10 app integrations. Lists, standalone canvases, and Workflow Builder are paid-plan features.
+
+Slack Free mode should be treated as an operating surface, not a durable database. Keep the important task record in the task message, thread, channel canvas, and any external archive your team controls.
+
+References:
+
+- https://slack.com/help/articles/115003205446-Slack-plans-and-features
+- https://slack.com/help/articles/27204752526611-Feature-limitations-on-the-free-version-of-Slack
+- https://slack.com/help/articles/21290478840979-Feature-change-notice--Channel-canvases
+
 ## Recommended Channels
 
 Start small:
@@ -19,7 +31,7 @@ Start small:
 
 Add project-specific channels only when needed.
 
-## Task Message Template
+## Task Message
 
 ```text
 TASK: [Clear action-oriented title]
@@ -75,8 +87,9 @@ Each week:
 
 ## Known Free Plan Limits
 
-- Message and file history is limited by Slack's Free plan.
+- Message and file history is limited to the most recent 90 days; older workspace data may be deleted under Slack's Free plan policy.
+- Free workspaces have one canvas for each channel or DM, not standalone canvases.
+- Free workspaces have a 10-app integration limit.
 - Slack Lists are not available.
 - Workflow Builder is not available.
-- Standalone canvases are not available.
-- Channel and DM canvases are available, but this guide avoids relying on canvas automation.
+- Channel and DM canvases are available, but this guide avoids relying on canvas automation or canvas-as-database behavior.
