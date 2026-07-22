@@ -95,6 +95,8 @@ See:
 
 - `docs/architecture.md`
 - `docs/api.md`
+- `docs/events.md`
+- `docs/integration-model.md`
 - `docs/self-hosting.md`
 - `docs/web-app.md`
 - `docs/browser-accessibility-verification.md`

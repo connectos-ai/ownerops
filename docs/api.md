@@ -115,7 +115,7 @@ curl -sS 'http://localhost:3100/api/boards/kanban?workspaceId=workspace_demo'
 The API should not import DoBoth or ConnectOS code. If those systems connect to OwnerOps, they should use:
 
 - REST routes in this document.
-- Domain events described in `docs/architecture.md`.
+- Domain events described in `docs/events.md`.
 - Adapter interfaces in `packages/adapters`.
 
 That makes OwnerOps useful as a public project on its own while still making it natural to compose with broader operating systems.

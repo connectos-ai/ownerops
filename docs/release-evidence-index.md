@@ -4,7 +4,10 @@ Date: 2026-07-22
 
 Status: LOCAL RELEASE EVIDENCE COMPLETE; GITHUB EVIDENCE PENDING
 
-This index points maintainers to the evidence gathered for the public OwnerOps release candidate. It does not mark the release complete. The final gate remains closed until authenticated GitHub repository inspection/creation, GitHub-hosted CI, and the final public-release security audit pass.
+This index points maintainers to evidence gathered for the public OwnerOps
+release candidate. It does not mark release complete. The final gate remains
+closed until authenticated GitHub repository inspection or creation,
+GitHub-hosted CI, and final public-release security audit pass.
 
 ## Current Candidate
 
@@ -20,20 +23,21 @@ This index points maintainers to the evidence gathered for the public OwnerOps r
 | Standalone task manager works without Slack, email, AI, DoBoth, or ConnectOS | PASS locally | `docs/product-verification.md`, `docs/browser-accessibility-verification.md`, `tests/api-vertical-slice.test.js`, `tests/standalone-task-manager.test.js`, `tests/core-workspace.test.js` |
 | Slack Free native templates usable manually | PASS locally | `docs/slack-capability-matrix.md`, `docs/slack-native-starter-guide.md`, `templates/slack-free/` |
 | Slack paid templates documented accurately | PASS locally | `docs/slack-capability-matrix.md`, `docs/slack-paid-enhancements.md`, `templates/slack-paid/` |
-| Enhanced Slack app mode optional | PASS locally | `docs/slack-enhanced-app.md`, `docs/architecture.md`, tests under `tests/slack-signing-interactions.test.js` |
+| Enhanced Slack app mode optional | PASS locally | `docs/slack-enhanced-app.md`, `docs/architecture.md`, `tests/slack-signing-interactions.test.js` |
 | Email triage through mock/configured provider boundary | PASS locally | `docs/product-verification.md`, `docs/email-triage.md`, `packages/triage/src/index.js`, `tests/api-vertical-slice.test.js` |
-| Daily and weekly briefs from task data | PASS locally | `docs/product-verification.md`, `docs/daily-brief.md`, `docs/weekly-review.md`, `tests/core-workspace.test.js` |
-| DoBoth and ConnectOS optional only | PASS locally | `README.md`, `docs/architecture.md`, `docs/api.md` |
+| Daily and weekly briefs work from task data | PASS locally | `docs/product-verification.md`, `docs/daily-brief.md`, `docs/weekly-review.md`, `tests/core-workspace.test.js` |
+| DoBoth and ConnectOS optional adapters only | PASS locally | `README.md`, `docs/architecture.md`, `docs/integration-model.md`, `packages/adapters/src/index.js` |
+| Public API/event/integration boundaries documented | PASS locally | `docs/api.md`, `docs/events.md`, `docs/integration-model.md`, `packages/adapters/src/index.js` |
 
 ## Security And Privacy Evidence
 
 | Gate | Status | Evidence |
 | --- | --- | --- |
-| Working tree scan | PASS locally | `npm run check`, `bash scripts/public-release-audit.sh .`, private release audit wrapper |
+| Working tree scan | PASS locally | `scripts/public-release-audit.sh`, local audit results |
 | Git history scan | PASS locally | `docs/security/git-history-privacy-audit.md` |
-| Author/committer metadata reviewed | PASS locally | `docs/security/git-history-privacy-audit.md` |
-| No private remotes | PASS locally | `docs/security/git-history-privacy-audit.md`, `docs/github-launch-runbook.md` |
-| No `.env`, backups, logs, runtime data | PASS locally | `scripts/public-release-audit.sh`, `.gitignore`, local audit results |
+| Author/committer metadata reviewed | PASS locally | `docs/security/git-history-privacy-audit.md`, `npm run release:local-gate` |
+| No private remotes | PASS locally | `docs/security/git-history-privacy-audit.md`, `npm run release:local-gate` |
+| No `.env`, backups, logs, runtime data | PASS locally | `.gitignore`, `scripts/public-release-audit.sh` |
 | No real personal, client, Slack, Gmail, or machine details | PASS locally | `docs/security/git-history-privacy-audit.md`, public/private audit scans |
 | No secret-shaped values | PASS locally | `docs/security/git-history-privacy-audit.md`, `scripts/public-release-audit.sh` |
 | HTTP API auth policy reviewed | PASS locally | `docs/security/auth-policy.md`, `tests/api-auth.test.js` |
@@ -56,14 +60,15 @@ This index points maintainers to the evidence gathered for the public OwnerOps r
 
 ## GitHub Evidence Still Required
 
-These gates require authenticated GitHub access and must not be marked complete from local-only evidence:
+These gates require authenticated GitHub access and must not be marked complete
+from local-only evidence:
 
 - GitHub CLI authentication or equivalent GitHub web session.
 - `ownerops-ai/ownerops` exists or can be created.
-- Remote is empty or inspected.
+- Remote empty or inspected.
 - No force push needed.
 - Repository description set.
-- Default branch is `main`.
+- Default branch `main`.
 - GitHub-hosted CI passes.
 - Final public-release security audit changes to `PASS`.
 
@@ -76,7 +81,7 @@ Use `docs/github-launch-runbook.md` for the exact sequence.
 3. Inspect or create the GitHub repository with authenticated owner/org permissions.
 4. Push `main` without force.
 5. Wait for GitHub Actions.
-6. Record the hosted CI run URL and outcome.
+6. Record hosted CI run URL and outcome.
 7. Configure or record branch protection recommendations.
 8. Run one final privacy/security scan.
 9. Update `docs/security/public-release-security-audit.md` to `PASS` only if all critical and high-risk findings are resolved.

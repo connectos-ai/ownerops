@@ -44,6 +44,8 @@ DoBoth and ConnectOS can integrate through the same public interfaces available 
 - Public examples.
 
 There are no private DoBoth backdoors and no hidden ConnectOS dependency.
+See `docs/integration-model.md` for capability-port rules and `docs/events.md`
+for event envelope.
 
 ## Capability Ports
 
@@ -135,6 +137,7 @@ OwnerOps keeps a canonical task model even when tasks are mirrored into Slack. M
 ## Domain Events
 
 Events are versioned, workspace-scoped, idempotent, and suitable for optional webhooks or future DoBoth orchestration.
+The public event catalog is `docs/events.md`.
 
 ```json
 {
