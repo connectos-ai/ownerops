@@ -24,7 +24,7 @@ GitHub-hosted CI, and final public-release security audit pass.
 | Workspace user lifecycle identity mapping | PASS locally | `docs/task-system.md`, `docs/api.md`, `tests/workspace-setup.test.js` |
 | Task reviewer approver related-user filtering | PASS locally | `docs/task-system.md`, `docs/api.md`, `tests/standalone-task-manager.test.js`, `tests/relational-store.test.js` |
 | Slack Free native templates usable manually | PASS locally | `docs/slack-capability-matrix.md`, `docs/slack-native-starter-guide.md`, `templates/slack-free/` |
-| Slack paid templates documented accurately | PASS locally | `docs/slack-capability-matrix.md`, `docs/slack-paid-enhancements.md`, `templates/slack-paid/` |
+| Slack plan-aware enhancement templates documented accurately | PASS locally | `docs/slack-capability-matrix.md`, `docs/slack-paid-enhancements.md`, `templates/slack-paid/` |
 | Enhanced Slack app mode optional | PASS locally | `docs/slack-enhanced-app.md`, `packages/slack/src/index.js`, `tests/slack-app.test.js` |
 | Email triage through provider boundary | PASS locally | `docs/email-triage.md`, `packages/triage/src/index.js`, `tests/triage-vertical-slice.test.js`, `tests/api-vertical-slice.test.js` |
 | Explainable triage suggestions and due-date inference | PASS locally | `docs/email-triage.md`, `tests/triage-vertical-slice.test.js`, `tests/api-vertical-slice.test.js` |

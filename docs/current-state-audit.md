@@ -17,7 +17,7 @@ pending.
 - Slack Enhanced Mode pieces for request signing, OAuth, commands, shortcuts,
   modals, App Home, outgoing messages, encrypted installation tokens, uninstall
   and token revocation handling.
-- Slack Free and paid native templates.
+- Slack Free and plan-aware native enhancement templates.
 - Local JSON store and optional PostgreSQL store.
 - Public API, event model, and capability integration model.
 - Required fictional personas mapped to public docs and tests.
@@ -25,7 +25,7 @@ pending.
 
 ## Independence Finding
 
-OwnerOps does not require DoBoth, ConnectOS, Slack, email, paid Slack features,
+OwnerOps does not require DoBoth, ConnectOS, Slack, email, plan-specific Slack features,
 or an AI provider for standalone task management. DoBoth and ConnectOS integration
 points are documented as optional public APIs, events, and adapters.
 

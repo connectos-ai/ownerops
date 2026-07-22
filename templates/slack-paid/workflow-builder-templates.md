@@ -1,6 +1,9 @@
 # Workflow Builder Templates
 
-These workflows use native Slack patterns for paid workspaces. Workflow Builder is a paid-plan feature and may be restricted by workspace owners/admins.
+Use these templates when Workflow Builder is enabled for the target workspace
+and the team has permission to create/publish workflows. Keep the manual
+fallbacks in place for workspaces where workflow creation, triggers, or steps
+are restricted.
 
 ## Submit Task
 
@@ -13,15 +16,15 @@ These workflows use native Slack patterns for paid workspaces. Workflow Builder 
 
 - Trigger: workflow link or message shortcut
 - Questions: decision needed, options, recommendation, risk, deadline
-- Destination: `#ownerops-decisions` or Slack List item with `Needs Owner`
-- Manual fallback: post task with status `Needs Owner`
+- Destination: `#ownerops-decisions` or Slack List item with status `Needs Owner`
+- Manual fallback: post task status `Needs Owner`
 
 ## Report Blocker
 
 - Trigger: workflow link
 - Questions: task, blocker, who can unblock, by when, attempted next step
 - Destination: task thread, Slack List item update, or `#ownerops-waiting`
-- Manual fallback: add `:warning:` and thread update
+- Manual fallback: add `:warning:` thread update
 
 ## Weekly Check-In
 

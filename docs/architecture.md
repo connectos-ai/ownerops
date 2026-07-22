@@ -29,7 +29,7 @@ OwnerOps must start providing value without:
 - AI.
 - DoBoth.
 - ConnectOS.
-- Paid Slack features.
+- Plan-specific Slack features.
 
 Integrations add capabilities. They do not define the core product.
 

@@ -45,7 +45,7 @@ OwnerOps must remain useful when DoBoth and ConnectOS are disconnected. When the
 ## Slack-Native Task Options
 
 - Free Slack: use Slack Free starter templates in `templates/slack-free/`.
-- Paid Slack: use Slack Lists, Workflow Builder, and canvas templates in `templates/slack-paid/`.
+- Plan-aware Slack enhancements: use Slack Lists, Workflow Builder, and canvas templates in `templates/slack-paid/` when enabled for the target workspace.
 - Enhanced Slack app: use OwnerOps app integrations when you want automation.
 
 See `docs/slack-capability-matrix.md` before choosing a Slack setup.

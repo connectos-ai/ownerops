@@ -9,7 +9,7 @@ workflow, email-to-task conversion, operating briefs, and public integrations.
 - Standalone task manager.
 - Static web app served by local API.
 - Manual Slack Free templates.
-- Slack paid templates and capability matrix.
+- Slack plan-aware enhancement templates and capability matrix.
 - Enhanced Slack app request verification, commands, shortcuts, modals, App Home,
   outgoing messages, OAuth, encrypted installation tokens.
 - Mock email triage and approval-to-task flow.

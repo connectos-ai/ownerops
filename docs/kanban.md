@@ -17,8 +17,9 @@ Done
 ## Representations
 
 - Standalone OwnerOps board in the web app.
-- Slack List board view on paid Slack plans.
-- Channel/reaction workflow for Slack Free mode.
+- Slack List board view when Lists are enabled for the target workspace.
+- Channel/reaction workflow for Slack Free starter mode.
 - App Home or modal board in enhanced Slack app mode.
 
-Canvas templates can describe and summarize the board, but a canvas is not the canonical live Kanban database in enhanced mode.
+Canvas templates can describe and summarize a board, but canvas is not the
+canonical live Kanban database in enhanced mode.

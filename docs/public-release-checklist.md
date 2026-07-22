@@ -11,7 +11,7 @@ OwnerOps may not be published until every item is complete.
 - [x] Task requester, reviewer, approver, collaborator, and related-user filtering tested while preserving one accountable owner.
 - [x] Relational schema, adapter, and migration runner documented without requiring database service for local JSON use.
 - [x] Slack Free native templates usable manually.
-- [x] Slack paid templates are documented accurately.
+- [x] Slack plan-aware enhancement templates are documented accurately.
 - [x] Enhanced Slack app mode is optional.
 - [x] Email triage works through mock provider/configured provider boundary.
 - [x] Email triage suggestions include deterministic explanation metadata and due-date inference.
