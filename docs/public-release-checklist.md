@@ -21,6 +21,7 @@ OwnerOps may not be published until every item is complete.
 - [x] DoBoth and ConnectOS are optional adapters only.
 - [x] Public event model documented.
 - [x] Capability-based integration model documented.
+- [x] Required fictional personas mapped to public docs/tests.
 - [x] Public current-state audit documented.
 - [x] Reusable Slack templates with fictional examples are present.
 

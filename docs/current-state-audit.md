@@ -20,6 +20,7 @@ pending.
 - Slack Free and paid native templates.
 - Local JSON store and optional PostgreSQL store.
 - Public API, event model, and capability integration model.
+- Required fictional personas mapped to public docs and tests.
 - Backup, restore, restore-test, CI, and local release-gate scripts.
 
 ## Independence Finding

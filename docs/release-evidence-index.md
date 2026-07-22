@@ -34,6 +34,7 @@ GitHub-hosted CI, and final public-release security audit pass.
 | DoBoth and ConnectOS optional adapters only | PASS locally | `README.md`, `docs/architecture.md`, `docs/integration-model.md`, `docs/events.md` |
 | Public event model | PASS locally | `docs/events.md` |
 | Capability-based integration model | PASS locally | `docs/integration-model.md` |
+| Required fictional personas mapped to evidence | PASS locally | `docs/persona-verification.md` |
 | Public current-state audit | PASS locally | `docs/current-state-audit.md` |
 
 ## Security And Privacy Evidence

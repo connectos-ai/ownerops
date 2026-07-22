@@ -115,6 +115,7 @@ See:
 - `docs/slack-enhanced-app.md`
 - `docs/permissions-and-scopes.md`
 - `docs/product-verification.md`
+- `docs/persona-verification.md`
 - `docs/task-system.md`
 - `docs/email-triage.md`
 - `docs/slack-native-starter-guide.md`
