@@ -12,7 +12,7 @@ Latest product/security content checkpoint inspected before this evidence-only
 audit update:
 
 ```text
-8ed1acebf1bcd58991d2da9594d797b7e21c7845
+b61371109128acc0fef0686ecdd4563805e0c09c
 ```
 
 This audit file is committed as evidence after the scan. Verify the current
@@ -21,15 +21,19 @@ checkout with `git rev-parse HEAD` before publication.
 Reachable history inspected:
 
 ```text
-57 commits on main after this evidence update
+58 commits on main before this evidence update
 ```
 
 Object database note:
 
-- `git fsck --full --no-reflogs` reported three dangling local commits and twelve dangling local blobs.
-- Dangling objects are not reachable from `main` and are not part of a normal push.
-- Dangling commits use generic maintainer metadata and are unreachable from `main`.
-- Dangling-object sensitive scans found no private/client identifiers, local machine paths, or high-risk token-shaped secret patterns.
+- `git fsck --full --no-reflogs` reported three dangling local commits and
+  twelve dangling local blobs.
+- Dangling objects are not reachable from `main` and are not part of a normal
+  push.
+- Dangling commits use generic maintainer metadata and are unreachable from
+  `main`.
+- Dangling-object sensitive scans found no private/client identifiers, local
+  machine paths, or high-risk token-shaped secret patterns.
 
 ## Commands Used
 
@@ -49,14 +53,15 @@ git cat-file -p '<dangling-object>' | grep -Eai '<private-and-secret-denylist>'
 Historical content scans used `git grep` across every reachable commit for
 private/client identifiers, local machine paths, common secret formats, and
 token-shaped values. The exact private denylist is intentionally not published
-in this public repository.
+in the public repository.
 
 ## Search Categories Used
 
 Audit covered:
 
 - Known private names and client identifiers from the source environment.
-- Known private email account, church, property, message-source, and machine identifiers from the source environment.
+- Known private email account, church, property, message-source, and machine
+  identifiers from the source environment.
 - Local absolute path markers.
 - Common cloud access key shapes.
 - Common OAuth token shapes.
@@ -70,29 +75,28 @@ Audit covered:
 ## Findings
 
 - Current branch has no configured Git remote.
-- Author/committer metadata is generic: `OwnerOps Maintainers <maintainers@example.com>`.
-- Reachable history contains no matches for real private/client identifiers, local machine paths, or high-risk token-shaped secret patterns.
+- Author/committer metadata is generic:
+  `OwnerOps Maintainers <maintainers@example.com>`.
+- Reachable history contains no matches for real private/client identifiers,
+  local machine paths, or high-risk token-shaped secret patterns.
 - Commit messages contain no private details.
-- Historical filenames include expected public files such as `.env.example`, Slack docs, OAuth docs, backup scripts, Slack tests, and release-audit docs.
-- Secret-adjacent matches in reachable history are expected public placeholders, environment variable names, example local database URLs, and code paths that read secrets from environment variables.
-- No real `.env` files, backup artifacts, log files, runtime data, credential exports, Slack/Gmail tokens, private keys, or client data were found in reachable history.
-- Dangling local objects are unreachable from `main`; sensitive scans found no private/client identifiers, local machine paths, or high-risk token-shaped secret patterns.
+- Historical filenames include expected public files such as `.env.example`,
+  Slack docs, OAuth docs, backup scripts, Slack tests, and release-audit docs.
+- Secret-adjacent matches in reachable history are expected public placeholders,
+  environment variable names, example local database URLs, or code paths that
+  read secrets from environment variables.
+- No real `.env` files, backup artifacts, log files, runtime data, credential
+  exports, Slack/Gmail tokens, private keys, or client data were found in
+  reachable history.
+- Dangling local objects are unreachable from `main`; sensitive scans found no
+  private/client identifiers, local machine paths, or high-risk token-shaped
+  secret patterns.
 
 ## Remediation
 
-No remediation required for the reachable public history checkpoint.
+No remediation is required for the reachable public history checkpoint. Before
+publication, maintainers may run `git gc --prune=now` in the local preparation
+clone to remove unreachable dangling objects. This is not required for a normal
+push, but it keeps local object evidence at the inspected checkpoint.
 
-Before publication, maintainers may run `git gc --prune=now` in the local
-preparation clone to remove unreachable dangling objects. This is not required
-for a normal push, but keeps the local object database tidy.
-
-## Remaining Accepted Risks
-
-- Authenticated GitHub repository inspection or creation is still pending.
-- GitHub-hosted CI evidence is still pending.
-- Final public-release security audit remains `FAIL` until GitHub gates are complete.
-
-## Result
-
-PASS for local reachable git history privacy evidence at the inspected
-checkpoint. This is not the final public-release PASS.
+This is not final public-release PASS.

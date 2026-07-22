@@ -6,10 +6,11 @@ Status: FAIL
 
 ## Commit Inspected
 
-Latest local release candidate content checkpoint inspected:
+Latest local release candidate content checkpoint inspected before this
+evidence-only audit update:
 
 ```text
-fe2441040a7099b315abac33958af3a009fc8238
+b61371109128acc0fef0686ecdd4563805e0c09c
 ```
 
 Verify the current checkout with `git rev-parse HEAD` before publication.
@@ -57,19 +58,21 @@ access is not available yet.
 The audit searched for:
 
 - Private names and client identifiers from the source environment.
-- Private email account, church, property, message-source, and machine identifiers from the source environment.
+- Private email account, church, property, message-source, and machine
+  identifiers from the source environment.
 - Local home-directory path markers.
 - Real Slack workspace, channel, user, token, signing-secret, and OAuth values.
 - Real Gmail, Microsoft, Google OAuth, and mailbox identifiers.
 - Private repository URLs and internal hostnames.
-- Real customer, staff, church, client, calendar, task, and message content.
+- Real customer, staff, church, client, calendar, task, or message content.
 - Common cloud access key formats.
-- Common OAuth and bearer-token formats.
+- Common OAuth bearer-token formats.
 - Common Slack token formats.
 - Common OpenAI-compatible API key formats.
 - PEM and OpenSSH private-key block markers.
 - Database, SMTP, webhook, cookie, session, JWT, and encryption-key terms.
-- Secret-adjacent terms such as API key, client secret, refresh token, access token, bot token, password, bearer token, credential, OAuth, Gmail, and Slack.
+- Secret-adjacent terms such as API key, client secret, refresh token, access
+  token, bot token, password, bearer token, credential, OAuth, Gmail, and Slack.
 
 The exact private denylist is intentionally not published in this repository.
 
@@ -79,20 +82,27 @@ The exact private denylist is intentionally not published in this repository.
 
 - Working tree public audit passes.
 - Reachable git-history privacy audit passes locally.
-- Author and committer metadata are generic: `OwnerOps Maintainers <maintainers@example.com>`.
+- Author/committer metadata is generic:
+  `OwnerOps Maintainers <maintainers@example.com>`.
 - No git remote is configured in the local public candidate.
-- No real `.env` files, backups, logs, runtime data, credential exports, Slack/Gmail tokens, private keys, or client data were found in the public candidate.
+- No real `.env` files, backups, logs, runtime data, credential exports,
+  Slack/Gmail tokens, private keys, or client data found in the public candidate.
 - Public examples and fixtures use fictional identifiers.
-- Dependency audit reports zero high or critical vulnerabilities.
-- Local release gate passes with 54 tests.
-- Slack Free and plan-aware native-template docs were refreshed against official Slack documentation on 2026-07-22.
-- Prompt-injection-like triage source content is recorded as untrusted review metadata and covered by tests.
-- Git dangling objects are unreachable from `main`; sensitive scans found no private/client identifiers, local machine paths, or high-risk token-shaped secret patterns.
+- Dependency audit reports zero high-severity vulnerabilities.
+- Local release gate passes 54 tests.
+- Slack Free plan-aware native-template docs were refreshed against official
+  Slack documentation on 2026-07-22.
+- Prompt-injection-like triage source content is recorded as untrusted review
+  metadata and covered by tests.
+- Git dangling objects are unreachable from `main`; sensitive scans found no
+  private/client identifiers, local machine paths, or high-risk token-shaped
+  secret patterns.
 
 ### Blocking Findings
 
 - GitHub CLI is installed but not authenticated.
-- Target GitHub repository `ownerops-ai/ownerops` has not been authenticated-inspected or created.
+- Target GitHub repository `ownerops-ai/ownerops` has not been
+  authenticated-inspected or created.
 - No public remote has been intentionally added after inspection.
 - No first public push has occurred.
 - GitHub-hosted CI evidence is missing.
@@ -101,22 +111,36 @@ The exact private denylist is intentionally not published in this repository.
 
 ## Remediation Completed
 
-- Built a clean public candidate repository separate from the private source workspace.
-- Rewrote/sanitized examples and templates to use fictional data only.
-- Added public release audit script for local path, private env, denylist, and secret-shaped scans.
+- Built a clean public candidate repository separate from the private source
+  workspace.
+- Rewrote and sanitized examples/templates to use fictional data only.
+- Added a public release audit script covering local paths, private env files,
+  private denylist terms, and secret-shaped values.
 - Added git-history privacy audit evidence.
-- Added privacy-conscious log redaction utility and tests.
+- Added privacy-conscious log redaction utility tests.
 - Added encrypted Slack token storage and OAuth state validation tests.
-- Added workspace identity hashing so raw user emails are not persisted in task records.
-- Added deterministic triage explanation metadata, due-date inference, and prompt-injection safety flags.
-- Added persona verification evidence for the required fictional user profiles.
-- Added Slack Free and plan-aware enhancement guidance with conservative fallbacks.
+- Added workspace identity hashing so raw user emails are not persisted in task
+  records.
+- Added deterministic triage explanation metadata, due-date inference, and
+  prompt-injection safety flags.
+- Added persona verification evidence for required fictional user profiles.
+- Added Slack Free plan-aware enhancement guidance with conservative fallbacks.
+- Pinned GitHub Actions to immutable commit SHAs and documented the refresh
+  process.
+- Repaired the release evidence index so local evidence and GitHub-only blockers
+  are readable before publication.
 
 ## Remaining Accepted Risks
 
-- Dangling local git objects remain in the preparation clone. They are not reachable from `main` and are not part of a normal push; scans found no high-risk private/secret content. Maintainers may run `git gc --prune=now` before archive handoff.
-- Role-based authorization is documented as future hardening beyond the current public candidate. Current local release evidence covers workspace scoping, Slack team mapping, API bearer-token protection, and idempotency checks.
-- Slack feature availability can vary by plan, admin setting, and rollout. Documentation now requires workspace verification and manual fallbacks.
+- Dangling local git objects remain in the preparation clone. They are not
+  reachable from `main` and are not part of a normal push; scans found no
+  high-risk private or secret content. Maintainers may run `git gc --prune=now`
+  before archive handoff.
+- Role-based authorization is documented as future hardening beyond the current
+  public candidate. Current local release evidence covers workspace scoping,
+  Slack team mapping, API bearer-token protection, and idempotency checks.
+- Slack feature availability can vary by plan, admin setting, and rollout.
+  Documentation requires workspace verification and manual fallbacks.
 
 ## Final Result
 
