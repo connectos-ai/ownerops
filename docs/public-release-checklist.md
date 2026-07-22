@@ -22,6 +22,7 @@ OwnerOps may not be published until every item is complete.
 - [x] Public event model documented.
 - [x] Capability-based integration model documented.
 - [x] Required fictional personas mapped to public docs/tests.
+- [x] Objective coverage audit maps release requirements to evidence.
 - [x] Public current-state audit documented.
 - [x] Reusable Slack templates with fictional examples present.
 

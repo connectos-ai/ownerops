@@ -105,6 +105,7 @@ See:
 - `docs/web-app.md`
 - `docs/browser-accessibility-verification.md`
 - `docs/release-evidence-index.md`
+- `docs/objective-coverage-audit.md`
 - `docs/github-launch-runbook.md`
 - `docs/storage-and-migrations.md`
 - `docs/ci-and-release-gates.md`

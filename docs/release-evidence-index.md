@@ -39,6 +39,7 @@ security audit pass.
 | Public event model | PASS locally | `docs/events.md` |
 | Capability-based integration model | PASS locally | `docs/integration-model.md` |
 | Required fictional personas mapped to evidence | PASS locally | `docs/persona-verification.md` |
+| Objective coverage audit | PASS locally | `docs/objective-coverage-audit.md` |
 | Public current-state audit | PASS locally | `docs/current-state-audit.md` |
 | Storage, migrations, backup, and restore-test coverage | PASS locally | `docs/storage-and-migrations.md`, `tests/database-backup-scripts.test.js`, `tests/storage-persistence.test.js`, `tests/storage-relational-schema.test.js`, `tests/relational-store.test.js` |
 
