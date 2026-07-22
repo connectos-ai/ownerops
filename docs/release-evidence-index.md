@@ -29,6 +29,7 @@ GitHub-hosted CI, and final public-release security audit pass.
 | DoBoth and ConnectOS optional adapters only | PASS locally | `README.md`, `docs/architecture.md`, `docs/integration-model.md`, `packages/adapters/src/index.js` |
 | Public API/event/integration boundaries documented | PASS locally | `docs/api.md`, `docs/events.md`, `docs/integration-model.md`, `packages/adapters/src/index.js` |
 | Public current-state audit documented | PASS locally | `docs/current-state-audit.md` |
+| Reusable templates and fictional examples | PASS locally | `templates/slack-free/`, `templates/slack-paid/`, `examples/email-to-task.md`, `examples/owner-decision.md`, `examples/mock-workspace-seed.json` |
 
 ## Security And Privacy Evidence
 

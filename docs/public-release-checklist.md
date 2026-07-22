@@ -17,6 +17,7 @@ OwnerOps may not be published until every item is complete.
 - [x] Public event model documented.
 - [x] Capability-based integration model documented.
 - [x] Public current-state audit documented.
+- [x] Reusable Slack templates and fictional examples present.
 
 ## Security And Privacy
 

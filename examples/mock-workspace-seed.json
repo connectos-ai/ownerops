@@ -1,0 +1,67 @@
+{
+  "workspace": {
+    "id": "workspace_demo",
+    "name": "Demo Operations Team"
+  },
+  "users": [
+    {
+      "id": "user_casey",
+      "displayName": "Casey",
+      "role": "owner"
+    },
+    {
+      "id": "user_morgan",
+      "displayName": "Morgan",
+      "role": "manager"
+    },
+    {
+      "id": "user_riley",
+      "displayName": "Riley",
+      "role": "team_member"
+    }
+  ],
+  "projects": [
+    {
+      "id": "project_walkthrough",
+      "name": "Walkthrough Launch"
+    }
+  ],
+  "lists": [
+    {
+      "id": "list_inbox",
+      "name": "Inbox"
+    },
+    {
+      "id": "list_today",
+      "name": "Today"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "task_demo_001",
+      "workspaceId": "workspace_demo",
+      "title": "Send updated walkthrough packet",
+      "ownerId": "user_riley",
+      "requestedBy": "user_morgan",
+      "status": "READY",
+      "priority": "NORMAL",
+      "dueAt": "2026-01-08T17:00:00.000Z",
+      "projectId": "project_walkthrough",
+      "sourceType": "email",
+      "sourceReference": "email_demo_walkthrough_001"
+    },
+    {
+      "id": "task_demo_002",
+      "workspaceId": "workspace_demo",
+      "title": "Approve event budget range",
+      "ownerId": "user_casey",
+      "requestedBy": "user_morgan",
+      "status": "NEEDS_OWNER",
+      "priority": "HIGH",
+      "dueAt": "2026-01-06T17:00:00.000Z",
+      "projectId": "project_walkthrough",
+      "ownerDecisionRequired": true,
+      "ownerDecisionReason": "Meaningful financial authorization"
+    }
+  ]
+}

@@ -120,6 +120,14 @@ See:
 - `docs/slack-native-starter-guide.md`
 - `docs/public-release-checklist.md`
 
+Templates and fictional examples:
+
+- `templates/slack-free/`
+- `templates/slack-paid/`
+- `examples/email-to-task.md`
+- `examples/owner-decision.md`
+- `examples/mock-workspace-seed.json`
+
 ## License
 
 Apache License 2.0. See `LICENSE`.
