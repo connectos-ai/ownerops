@@ -12,6 +12,7 @@ release:
 - Standalone task manager works without Slack, email, AI, DoBoth, or ConnectOS.
 - Mock email triage creates reviewable task suggestion.
 - Mock email triage records deterministic explanation metadata and due-date inference.
+- Mock email triage flags prompt-injection-like source content as untrusted.
 - Owner-approved triage suggestions create canonical tasks.
 - Daily briefs are generated from task data.
 - Weekly reviews are generated from task data.
@@ -33,9 +34,9 @@ Verified capabilities:
 - Team member setup.
 - Project and list setup.
 - Manual task creation.
-- Assignment reassignment.
+- Assignment and reassignment.
 - Status changes.
-- Owner-decision requests resolution.
+- Owner-decision requests and resolution.
 - Comments.
 - Subtasks.
 - Search and filters.
@@ -72,6 +73,8 @@ Verified behavior:
   due-date reason, priority reason, decision reason, and uncertainties.
 - Triage infers `dueAt` from `today`, `tomorrow`, and `by <weekday>` language
   relative to the message received timestamp.
+- Triage records `safetyFlags` for prompt-injection-like source content and
+  lowers confidence without granting permissions or performing side effects.
 - Triage stores reviewable suggestion.
 - `POST /api/triage/suggestions/:suggestionId/approve` creates canonical email-sourced task.
 - The flow does not require Slack, Gmail, AI, DoBoth, or ConnectOS.

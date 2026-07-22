@@ -28,6 +28,7 @@ GitHub-hosted CI, and final public-release security audit pass.
 | Enhanced Slack app mode optional | PASS locally | `docs/slack-enhanced-app.md`, `packages/slack/src/index.js`, `tests/slack-app.test.js` |
 | Email triage through provider boundary | PASS locally | `docs/email-triage.md`, `packages/triage/src/index.js`, `tests/triage-vertical-slice.test.js`, `tests/api-vertical-slice.test.js` |
 | Explainable triage suggestions and due-date inference | PASS locally | `docs/email-triage.md`, `tests/triage-vertical-slice.test.js`, `tests/api-vertical-slice.test.js` |
+| Prompt-injection-like source content remains untrusted review metadata | PASS locally | `docs/email-triage.md`, `docs/security/threat-model.md`, `tests/triage-vertical-slice.test.js` |
 | Triage approval/rejection and duplicate merge | PASS locally | `tests/triage-vertical-slice.test.js`, `tests/api-vertical-slice.test.js`, `packages/core/src/index.js` |
 | Daily and weekly briefs | PASS locally | `docs/daily-brief.md`, `docs/weekly-review.md`, `tests/core-workspace.test.js`, `tests/api-vertical-slice.test.js` |
 | DoBoth and ConnectOS optional adapters only | PASS locally | `README.md`, `docs/architecture.md`, `docs/integration-model.md`, `docs/events.md` |

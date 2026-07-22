@@ -15,6 +15,7 @@ OwnerOps may not be published until every item is complete.
 - [x] Enhanced Slack app mode is optional.
 - [x] Email triage works through mock provider/configured provider boundary.
 - [x] Email triage suggestions include deterministic explanation metadata and due-date inference.
+- [x] Email triage flags prompt-injection-like source content as untrusted review metadata.
 - [x] Triage suggestions can be approved or rejected, and duplicate tasks can be merged without deleting task history.
 - [x] Daily and weekly briefs work from task data.
 - [x] DoBoth and ConnectOS are optional adapters only.

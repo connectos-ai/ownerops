@@ -12,36 +12,44 @@ Scope: public OwnerOps release candidate.
 - OAuth tokens and provider credentials.
 - Slack signing secrets and token encryption keys.
 - Database contents and backups.
-- API bearer token when configured.
-- Audit and task history.
+- Configured API bearer token.
+- Audit task history.
 
 ## Trust Boundaries
 
-- Browser or API client to OwnerOps HTTP API.
+- Browser API client to OwnerOps HTTP API.
 - Slack requests to Slack webhook routes.
 - Slack OAuth redirect to OwnerOps callback.
 - Email or communication provider payloads to triage.
 - Optional AI provider requests and responses.
 - OwnerOps application to JSON file or PostgreSQL database.
-- Backup and restore scripts to filesystem or database.
-- Future webhooks or event consumers.
+- Backup/restore scripts to filesystem and database.
+- Future webhooks to event consumers.
 
 ## STRIDE Summary
 
 | Threat | Risk | Current Controls | Remaining Work |
 | --- | --- | --- | --- |
-| Spoofing | Fake API caller or fake Slack request mutates tasks | Optional `OWNEROPS_API_TOKEN`; Slack signature verification; signed OAuth state | First-party user auth and role checks |
+| Spoofing | Fake API caller or fake Slack request mutates tasks | Optional `OWNEROPS_API_TOKEN`; Slack signature verification; signed OAuth state | First-party user auth role checks |
 | Tampering | Retry or forged event changes task state twice | Slack idempotency tests; source duplicate protection; workspace-scoped records | Webhook signing when event delivery is added |
-| Repudiation | User denies task or decision change | Task history and events in core model | Richer audit export and admin view |
-| Information disclosure | Email, Slack, token, or prompt leaks through logs or public repo | Public audit script; encrypted token records; data-handling rules; redaction utility tests | More integration points should call redaction helpers as logging grows |
+| Repudiation | User denies task or decision change | Task history events in core model | Richer audit export admin view |
+| Information disclosure | Email, Slack, token, or prompt leaks through logs/public repo | Public audit script; encrypted token records; data-handling rules; redaction utility tests | More integration points should call redaction helpers as logging grows |
 | Denial of service | Large payloads or repeated requests overwhelm local API | Slack timing/idempotency design; small dependency surface | Rate limits for exposed deployments |
 | Elevation of privilege | Cross-workspace request mutates another workspace | Workspace-scoped store and Slack team mapping tests | Full role-based authorization |
 
 ## AI And Prompt Injection
 
-Email and Slack content are untrusted. AI output must be parsed as data,
-validated, and checked against workspace policy. AI suggestions must not bypass
-authorization, approval requirements, or side-effect controls.
+Email and Slack content are untrusted. Optional AI providers must receive only
+delimited, authorized content. AI output must be parsed as data, validated, and
+checked against workspace policy. AI suggestions must not bypass authorization,
+approval requirements, or side-effect controls.
+
+The deterministic triage engine detects prompt-injection-like language from
+source content, including instruction overrides, hidden-instruction requests,
+credential requests, and policy-bypass requests. These detections are recorded
+as reviewable `safetyFlags`, lower suggestion confidence, and add uncertainty
+metadata. They do not grant new permissions, reveal secrets, send messages, or
+perform mailbox/Slack side effects.
 
 ## Security Release Rules
 
@@ -58,4 +66,4 @@ authorization, approval requirements, or side-effect controls.
 - GitHub-hosted CI evidence.
 - Final working-tree and history privacy scan.
 - `docs/security/public-release-security-audit.md` changed to `PASS` only when
-  critical and high-risk findings are resolved.
+  critical/high-risk findings are resolved.

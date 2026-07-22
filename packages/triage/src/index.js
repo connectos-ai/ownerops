@@ -22,6 +22,14 @@ const OWNER_DECISION_PATTERNS = [
   /exception/i
 ];
 
+const PROMPT_INJECTION_PATTERNS = [
+  { pattern: /ignore (all )?(previous|prior|above) instructions/i, label: 'instruction override request' },
+  { pattern: /(reveal|print|show|exfiltrate).*(system prompt|developer message|hidden instructions|api key|token|password|credential|secret)/i, label: 'data disclosure request' },
+  { pattern: /system prompt|developer message|hidden instructions/i, label: 'hidden instruction request' },
+  { pattern: /send (the )?(api key|token|password|credential|secret)/i, label: 'credential request' },
+  { pattern: /bypass (approval|authorization|policy|permission)/i, label: 'policy bypass request' }
+];
+
 const WEEKDAY_INDEX = Object.freeze({
   sunday: 0,
   monday: 1,
@@ -38,6 +46,7 @@ export function classifyTextForWork(input) {
     .filter(({ pattern }) => pattern.test(text))
     .map(({ label }) => label);
   const containsWork = matchedSignals.length > 0;
+  const safetyFlags = detectPromptInjectionSignals(text);
   const ownerDecisionRequired = OWNER_DECISION_PATTERNS.some((pattern) => pattern.test(text));
   const priority = /urgent|today|asap|blocked|blocking/i.test(text)
     ? TaskPriority.HIGH
@@ -48,9 +57,10 @@ export function classifyTextForWork(input) {
     recommendedAction: containsWork ? 'suggest_task' : 'reference_only',
     ownerDecisionRequired,
     priority,
-    confidence: containsWork ? 0.72 : 0.42,
+    confidence: safetyFlags.length > 0 ? 0.38 : containsWork ? 0.72 : 0.42,
     matchedSignals,
     evidence: extractEvidence(text),
+    safetyFlags,
     explanation: containsWork
       ? 'The content includes language that appears to request follow-up work.'
       : 'No clear requested outcome was detected.'
@@ -141,6 +151,7 @@ function explainSuggestion({ body, classification, due, email, ownerId, sourceTe
     },
     evidence: classification.evidence,
     workSignals: classification.matchedSignals,
+    safetyFlags: classification.safetyFlags,
     inferredOutcome: outcome,
     owner: {
       ownerId,
@@ -204,8 +215,17 @@ function extractEvidence(text) {
   return compact.slice(index, index + 180).trim();
 }
 
+function detectPromptInjectionSignals(text) {
+  return PROMPT_INJECTION_PATTERNS
+    .filter(({ pattern }) => pattern.test(text))
+    .map(({ label }) => label);
+}
+
 function buildUncertainties({ classification, due, sourceText }) {
   const uncertainties = [];
+  if (classification.safetyFlags.length > 0) {
+    uncertainties.push('Source content includes prompt-injection-like instructions and must remain untrusted.');
+  }
   if (!classification.containsWork) uncertainties.push('No clear requested work signal detected.');
   if (!due.dueAt) uncertainties.push('Due date not explicit.');
   if (!/\b(reply|respond|send|schedule|call|update|check|ask|follow up)\b/i.test(sourceText)) {

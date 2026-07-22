@@ -64,12 +64,28 @@ Current suggestion explanations include:
 - Inferred due date and reason.
 - Priority and reason.
 - Owner-decision flag and reason.
+- Prompt-injection safety flags when source content tries to override instructions,
+  request credentials, or bypass policy.
 - Uncertainties such as unclear due date or unclear smallest next action.
 
 Current due-date inference supports `today`, `tomorrow`, and `by <weekday>`
 language relative to the message received timestamp. Inferred dates are stored
 on the suggested task as `dueAt`. If no explicit due-date language is found,
 OwnerOps leaves `dueAt` empty and records that uncertainty for review.
+
+## Untrusted Source Content
+
+Email bodies, Slack messages, and other communication content are always treated
+as untrusted source data. The deterministic triage engine detects
+prompt-injection-like language such as instruction overrides, hidden-instruction
+requests, credential requests, and policy-bypass requests. Those signals are
+recorded as `safetyFlags`, lower the suggestion confidence, and add an
+uncertainty for human review.
+
+Source content may influence task suggestions, but it must not modify OwnerOps
+policy, reveal credentials, bypass approval, or authorize external side effects.
+Automation and future AI providers must still pass workspace policy and
+authorization checks after any model output.
 
 ## Provider Model
 
