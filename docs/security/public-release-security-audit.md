@@ -10,7 +10,7 @@ Latest local release candidate content checkpoint inspected before this
 evidence-only audit update:
 
 ```text
-b61371109128acc0fef0686ecdd4563805e0c09c
+a5818eaeb818ecc11cb9511de0b9b0a6ac126f10
 ```
 
 Verify the current checkout with `git rev-parse HEAD` before publication.
@@ -127,6 +127,8 @@ The exact private denylist is intentionally not published in this repository.
 - Added Slack Free plan-aware enhancement guidance with conservative fallbacks.
 - Pinned GitHub Actions to immutable commit SHAs and documented the refresh
   process.
+- Aligned the local release gate success message with the full remaining
+  external gate list, including branch protection evidence.
 - Repaired the release evidence index so local evidence and GitHub-only blockers
   are readable before publication.
 
