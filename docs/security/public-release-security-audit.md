@@ -10,7 +10,7 @@ Latest local release candidate content checkpoint inspected before this
 evidence-only audit update:
 
 ```text
-a5818eaeb818ecc11cb9511de0b9b0a6ac126f10
+5254d2b5f814bbc209ac74da5afde24b78d5462e
 ```
 
 Verify the current checkout with `git rev-parse HEAD` before publication.
@@ -131,6 +131,8 @@ The exact private denylist is intentionally not published in this repository.
   external gate list, including branch protection evidence.
 - Repaired the release evidence index so local evidence and GitHub-only blockers
   are readable before publication.
+- Cleaned up the public release checklist wording while preserving GitHub-only
+  release blockers as unchecked.
 
 ## Remaining Accepted Risks
 
