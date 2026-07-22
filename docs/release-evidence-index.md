@@ -58,6 +58,7 @@ This index points maintainers to the evidence gathered for the public OwnerOps r
 
 These gates require authenticated GitHub access and must not be marked complete from local-only evidence:
 
+- GitHub CLI authentication or equivalent GitHub web session.
 - `ownerops-ai/ownerops` exists or can be created.
 - Remote is empty or inspected.
 - No force push needed.
@@ -71,10 +72,11 @@ Use `docs/github-launch-runbook.md` for the exact sequence.
 ## Required Final Sequence
 
 1. Run `npm run release:local-gate`.
-2. Inspect or create the GitHub repository with authenticated owner/org permissions.
-3. Push `main` without force.
-4. Wait for GitHub Actions.
-5. Record the hosted CI run URL and outcome.
-6. Configure or record branch protection recommendations.
-7. Run one final privacy/security scan.
-8. Update `docs/security/public-release-security-audit.md` to `PASS` only if all critical and high-risk findings are resolved.
+2. Authenticate GitHub CLI with `gh auth login` or use an authenticated GitHub web session.
+3. Inspect or create the GitHub repository with authenticated owner/org permissions.
+4. Push `main` without force.
+5. Wait for GitHub Actions.
+6. Record the hosted CI run URL and outcome.
+7. Configure or record branch protection recommendations.
+8. Run one final privacy/security scan.
+9. Update `docs/security/public-release-security-audit.md` to `PASS` only if all critical and high-risk findings are resolved.

@@ -22,8 +22,10 @@ Open-source owner-operator triage Slack-native task system.
 
 - Local branch: `main`.
 - Local repository has no configured remote.
-- GitHub CLI was not available in the local verification environment on 2026-07-22.
-- The public repository URL returned a not-found response when checked without authentication. Treat this as "not publicly inspectable" until an authenticated GitHub account verifies whether the repository exists, is private, or can be created.
+- GitHub CLI `gh` is installed in the local verification environment as of 2026-07-22.
+- `gh auth status` reports no logged-in GitHub hosts.
+- Unauthenticated `git ls-remote https://github.com/ownerops-ai/ownerops.git` could not inspect the repository.
+- Treat the target repository as "not authenticated-inspected" until a GitHub account with `ownerops-ai` permissions verifies whether the repository exists, is private, or can be created.
 
 ## Source Documents
 
@@ -77,6 +79,18 @@ If using the GitHub web UI:
 GitHub's repository creation docs warn not to pre-populate README, `.gitignore`, or license when importing an existing repository because it can create conflicts.
 
 If using GitHub CLI from an authenticated environment:
+
+```bash
+gh auth status
+```
+
+If not authenticated, run:
+
+```bash
+gh auth login
+```
+
+Then create the repository only after local gates pass and the target repository is confirmed absent or empty:
 
 ```bash
 gh repo create ownerops-ai/ownerops \
