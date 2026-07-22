@@ -4,15 +4,15 @@ OwnerOps may not be published until every item is complete.
 
 ## Product
 
-- [ ] Standalone task manager works without Slack, email, AI, DoBoth, or ConnectOS.
+- [x] Standalone task manager works without Slack, email, AI, DoBoth, or ConnectOS.
 - [x] Static standalone web app served by local API.
 - [x] Workspace, member, project, and list setup available in standalone web app.
 - [x] Relational schema, adapter, and migration runner documented without requiring database service for local JSON use.
 - [x] Slack Free native templates usable manually.
 - [x] Slack paid templates are documented accurately.
 - [x] Enhanced Slack app mode is optional.
-- [ ] Email triage works through mock provider configured provider.
-- [ ] Daily weekly briefs work from task data.
+- [x] Email triage works through mock provider/configured provider boundary.
+- [x] Daily and weekly briefs work from task data.
 - [x] DoBoth and ConnectOS optional adapters only.
 
 ## Security And Privacy
