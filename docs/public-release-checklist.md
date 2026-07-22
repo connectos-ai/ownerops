@@ -44,6 +44,7 @@ OwnerOps may not be published until every item is complete.
 - [x] README quickstart works.
 - [x] License, security policy, contribution guide, and code of conduct present.
 - [x] GitHub issue and pull request templates present.
+- [x] Generic CODEOWNERS file present.
 - [x] Release evidence index created.
 - [x] Local release gate command exists.
 - [x] Public API, event, and integration boundaries documented.

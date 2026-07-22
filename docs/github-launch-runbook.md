@@ -159,6 +159,8 @@ Create a branch protection rule for `main` after the first successful push and C
 
 Recommended settings:
 
+- Create or verify generic GitHub team `ownerops-ai/maintainers` before requiring CODEOWNERS reviews.
+
 - Require a pull request before merging.
 - Require status checks before merging.
 - Require the `Quality Gate` status check.

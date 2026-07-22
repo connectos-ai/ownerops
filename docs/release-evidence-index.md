@@ -59,7 +59,7 @@ GitHub-hosted CI, and final public-release security audit pass.
 | Local release gate command | PASS locally | `npm run release:local-gate` |
 | Browser/accessibility verification | PASS locally | `docs/browser-accessibility-verification.md` |
 | README quickstart | PASS locally | Clean-checkout quickstart evidence in `docs/security/git-history-privacy-audit.md` |
-| Community health files | PASS locally | `LICENSE`, `SECURITY.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md` |
+| Community health files | PASS locally | `LICENSE`, `SECURITY.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md`, `.github/CODEOWNERS` |
 | Deployment, troubleshooting, roadmap docs | PASS locally | `docs/deployment.md`, `docs/troubleshooting.md`, `docs/roadmap.md` |
 | Dependency update configuration | PASS locally | `.github/dependabot.yml`, `docs/ci-and-release-gates.md` |
 
