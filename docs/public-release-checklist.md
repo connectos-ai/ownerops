@@ -25,7 +25,7 @@ OwnerOps may not be published until every item is complete.
 - [ ] No real personal, client, church, Slack, Gmail, machine details.
 - [ ] No secrets secret-shaped values.
 - [ ] Dependency audit reviewed.
-- [ ] Database backup/restore procedure reviewed.
+- [x] Database backup/restore procedure reviewed.
 - [ ] `docs/security/public-release-security-audit.md` says `PASS`.
 
 ## Quality

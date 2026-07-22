@@ -52,4 +52,32 @@ OWNEROPS_STORAGE=postgres DATABASE_URL=postgres://ownerops:change-me@localhost:5
 
 `DATABASE_URL` alone does not switch local development into database mode. Set `OWNEROPS_STORAGE=postgres` intentionally when you want the server to use PostgreSQL.
 
-Production self-hosting still needs database backup/restore procedures before public release `PASS`.
+## Database Backup
+
+Install PostgreSQL client tools so `pg_dump`, `pg_restore`, and `psql` are available. Create a custom-format backup:
+
+```bash
+DATABASE_URL=postgres://ownerops:change-me@localhost:5432/ownerops npm run db:backup
+```
+
+By default, backups are written under `backups/database/` with a `.sha256` checksum beside the dump. Set `OWNEROPS_DATABASE_BACKUP_DIR` to choose a different ignored backup folder.
+
+## Database Restore
+
+Restore is intentionally explicit because it can replace target database contents:
+
+```bash
+OWNEROPS_RESTORE_CONFIRM=restore-ownerops-database OWNEROPS_RESTORE_DATABASE_URL=postgres://ownerops:change-me@localhost:5432/ownerops_restore_target npm run db:restore -- backups/database/ownerops-db-example.dump
+```
+
+If `backup.dump.sha256` exists, restore verifies it before calling `pg_restore`.
+
+## Database Restore Test
+
+Before copying a production deployment, restore the fresh backup into an isolated test database and verify required OwnerOps tables exist:
+
+```bash
+DATABASE_URL=postgres://ownerops:change-me@localhost:5432/ownerops OWNEROPS_RESTORE_TEST_DATABASE_URL=postgres://ownerops:change-me@localhost:5432/ownerops_restore_test npm run db:restore-test
+```
+
+The restore-test refuses to use the same source and target URL. Create and clear the restore-test database outside OwnerOps using your normal PostgreSQL operations.

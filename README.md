@@ -80,6 +80,13 @@ For PostgreSQL persistence, opt in explicitly:
 OWNEROPS_STORAGE=postgres DATABASE_URL=postgres://ownerops:change-me@localhost:5432/ownerops node apps/api/src/server.js
 ```
 
+Back up and restore-test PostgreSQL before production moves:
+
+```bash
+DATABASE_URL=postgres://ownerops:change-me@localhost:5432/ownerops npm run db:backup
+DATABASE_URL=postgres://ownerops:change-me@localhost:5432/ownerops OWNEROPS_RESTORE_TEST_DATABASE_URL=postgres://ownerops:change-me@localhost:5432/ownerops_restore_test npm run db:restore-test
+```
+
 Then visit `http://localhost:3100/` for the standalone task manager or `http://localhost:3100/healthz` for the health check.
 
 See:
