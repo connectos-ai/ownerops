@@ -16,6 +16,7 @@ OwnerOps may not be published until every item is complete.
 - [x] DoBoth and ConnectOS are optional adapters only.
 - [x] Public event model documented.
 - [x] Capability-based integration model documented.
+- [x] Public current-state audit documented.
 
 ## Security And Privacy
 
@@ -45,6 +46,8 @@ OwnerOps may not be published until every item is complete.
 - [x] Release evidence index created.
 - [x] Local release gate command exists.
 - [x] Public API, event, and integration boundaries documented.
+- [x] Deployment, troubleshooting, and roadmap docs present.
+- [x] Threat model and data-handling docs present.
 
 ## GitHub
 

@@ -97,7 +97,11 @@ See:
 - `docs/api.md`
 - `docs/events.md`
 - `docs/integration-model.md`
+- `docs/current-state-audit.md`
 - `docs/self-hosting.md`
+- `docs/deployment.md`
+- `docs/troubleshooting.md`
+- `docs/roadmap.md`
 - `docs/web-app.md`
 - `docs/browser-accessibility-verification.md`
 - `docs/release-evidence-index.md`
@@ -105,6 +109,8 @@ See:
 - `docs/storage-and-migrations.md`
 - `docs/ci-and-release-gates.md`
 - `docs/security/auth-policy.md`
+- `docs/security/threat-model.md`
+- `docs/security/data-handling.md`
 - `docs/security/git-history-privacy-audit.md`
 - `docs/slack-enhanced-app.md`
 - `docs/permissions-and-scopes.md`

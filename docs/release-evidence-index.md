@@ -28,6 +28,7 @@ GitHub-hosted CI, and final public-release security audit pass.
 | Daily and weekly briefs work from task data | PASS locally | `docs/product-verification.md`, `docs/daily-brief.md`, `docs/weekly-review.md`, `tests/core-workspace.test.js` |
 | DoBoth and ConnectOS optional adapters only | PASS locally | `README.md`, `docs/architecture.md`, `docs/integration-model.md`, `packages/adapters/src/index.js` |
 | Public API/event/integration boundaries documented | PASS locally | `docs/api.md`, `docs/events.md`, `docs/integration-model.md`, `packages/adapters/src/index.js` |
+| Public current-state audit documented | PASS locally | `docs/current-state-audit.md` |
 
 ## Security And Privacy Evidence
 
@@ -43,6 +44,7 @@ GitHub-hosted CI, and final public-release security audit pass.
 | HTTP API auth policy reviewed | PASS locally | `docs/security/auth-policy.md`, `tests/api-auth.test.js` |
 | Dependency audit reviewed | PASS locally | `npm audit --audit-level=high`, `npm run ci` |
 | Database backup/restore procedure reviewed | PASS locally | `docs/storage-and-migrations.md`, database backup/restore tests |
+| Threat model and data handling documented | PASS locally | `docs/security/threat-model.md`, `docs/security/data-handling.md` |
 
 ## Quality Evidence
 
@@ -57,6 +59,7 @@ GitHub-hosted CI, and final public-release security audit pass.
 | Browser/accessibility verification | PASS locally | `docs/browser-accessibility-verification.md` |
 | README quickstart | PASS locally | Clean-checkout quickstart evidence in `docs/security/git-history-privacy-audit.md` |
 | Community health files | PASS locally | `LICENSE`, `SECURITY.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md` |
+| Deployment, troubleshooting, roadmap docs | PASS locally | `docs/deployment.md`, `docs/troubleshooting.md`, `docs/roadmap.md` |
 
 ## GitHub Evidence Still Required
 
