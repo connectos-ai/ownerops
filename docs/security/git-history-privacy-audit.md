@@ -12,7 +12,7 @@ Latest product/security content checkpoint inspected before this evidence-only
 audit update:
 
 ```text
-528e8a97af1b6a975dcdb4ee6d87364e023bb74d
+38ea7676048773bb8ed4a7cbddabfe81fb03c3f3
 ```
 
 This audit file is committed as evidence after the scan. Verify the current
@@ -21,7 +21,7 @@ checkout with `git rev-parse HEAD` before publication.
 Reachable history inspected:
 
 ```text
-44 commits on main after this evidence update
+46 commits on main after this evidence update
 ```
 
 Object database note:
