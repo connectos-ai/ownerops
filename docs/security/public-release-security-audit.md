@@ -10,7 +10,7 @@ Latest local release candidate content checkpoint inspected before this
 evidence-only audit update:
 
 ```text
-5254d2b5f814bbc209ac74da5afde24b78d5462e
+accc62c1e7f04ae12ed6cf5b3a469dfe04e93024
 ```
 
 Verify the current checkout with `git rev-parse HEAD` before publication.
@@ -133,6 +133,8 @@ The exact private denylist is intentionally not published in this repository.
   are readable before publication.
 - Cleaned up the public release checklist wording while preserving GitHub-only
   release blockers as unchecked.
+- Added an objective coverage audit mapping the original release requirements
+  to local evidence and GitHub-only blockers.
 
 ## Remaining Accepted Risks
 
