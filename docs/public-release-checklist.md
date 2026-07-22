@@ -9,9 +9,9 @@ OwnerOps may not be published until every item is complete.
 - [x] Workspace, member, project, and list setup available in standalone web app.
 - [x] Workspace user invitation, role/status lifecycle, privacy-safe identity mapping, and deactivation API tested.
 - [x] Task requester, reviewer, approver, collaborator, and related-user filtering tested while preserving one accountable owner.
-- [x] Relational schema, adapter, and migration runner documented without requiring database service for local JSON use.
+- [x] Relational schema, adapter, and migration runner documented without requiring a database service for local JSON use.
 - [x] Slack Free native templates usable manually.
-- [x] Slack plan-aware enhancement templates are documented accurately.
+- [x] Slack plan-aware enhancement templates documented accurately.
 - [x] Enhanced Slack app mode is optional.
 - [x] Email triage works through mock provider/configured provider boundary.
 - [x] Email triage suggestions include deterministic explanation metadata and due-date inference.
@@ -23,7 +23,7 @@ OwnerOps may not be published until every item is complete.
 - [x] Capability-based integration model documented.
 - [x] Required fictional personas mapped to public docs/tests.
 - [x] Public current-state audit documented.
-- [x] Reusable Slack templates with fictional examples are present.
+- [x] Reusable Slack templates with fictional examples present.
 
 ## Security And Privacy
 
@@ -44,13 +44,13 @@ OwnerOps may not be published until every item is complete.
 ## Quality
 
 - [x] CI workflow configured locally.
-- [x] Install succeeds from a clean checkout.
+- [x] Install succeeds from clean checkout.
 - [x] Tests pass.
 - [x] No separate build step required for dependency-free web app.
 - [x] CI passes locally.
 - [x] Browser/accessibility verification complete for standalone web app.
 - [x] README quickstart works.
-- [x] License, security policy, contribution guide, and code conduct present.
+- [x] License, security policy, contribution guide, and code of conduct present.
 - [x] GitHub issue and pull request templates present.
 - [x] Generic CODEOWNERS file present.
 - [x] Release evidence index created.
