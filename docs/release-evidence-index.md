@@ -13,7 +13,8 @@ security audit pass.
 ## Current Candidate
 
 - Branch: `main`.
-- Current local checkpoint: `b61371109128acc0fef0686ecdd4563805e0c09c`.
+- Latest product/security checkpoint covered by local evidence:
+  `b61371109128acc0fef0686ecdd4563805e0c09c`.
 - Current release-prep status: `docs/security/public-release-security-audit.md`
   remains `FAIL`.
 - Target repository: `https://github.com/ownerops-ai/ownerops`.
