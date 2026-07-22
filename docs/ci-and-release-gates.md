@@ -34,6 +34,10 @@ The `Quality Gate` job runs:
 
 The `Dependency Review` job runs on pull requests and fails on high-severity dependency findings.
 
+## Dependency Updates
+
+`.github/dependabot.yml` checks npm dependencies and GitHub Actions weekly. Keep updates small, review dependency changes for scope and maintainer health, and run local release gate before merging.
+
 ## Public Release Rule
 
 CI passing is necessary but not sufficient for publication. The release gate remains closed until:

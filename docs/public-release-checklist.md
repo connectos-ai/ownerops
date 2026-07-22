@@ -48,6 +48,7 @@ OwnerOps may not be published until every item is complete.
 - [x] Public API, event, and integration boundaries documented.
 - [x] Deployment, troubleshooting, and roadmap docs present.
 - [x] Threat model and data-handling docs present.
+- [x] Dependency update configuration present.
 
 ## GitHub
 

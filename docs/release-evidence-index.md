@@ -60,6 +60,7 @@ GitHub-hosted CI, and final public-release security audit pass.
 | README quickstart | PASS locally | Clean-checkout quickstart evidence in `docs/security/git-history-privacy-audit.md` |
 | Community health files | PASS locally | `LICENSE`, `SECURITY.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md` |
 | Deployment, troubleshooting, roadmap docs | PASS locally | `docs/deployment.md`, `docs/troubleshooting.md`, `docs/roadmap.md` |
+| Dependency update configuration | PASS locally | `.github/dependabot.yml`, `docs/ci-and-release-gates.md` |
 
 ## GitHub Evidence Still Required
 
