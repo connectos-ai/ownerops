@@ -101,7 +101,7 @@ The exact private denylist is intentionally not published in this repository.
 ### Blocking Findings
 
 - GitHub CLI is installed but not authenticated.
-- Target GitHub repository `ownerops-ai/ownerops` has not been
+- Target GitHub repository `connectos-ai/ownerops` has not been
   authenticated-inspected or created.
 - No public remote has been intentionally added after inspection.
 - No first public push has occurred.

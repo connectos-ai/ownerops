@@ -9,7 +9,7 @@ This runbook prepares the public GitHub launch path for OwnerOps. Do not create,
 Target repository:
 
 ```text
-https://github.com/ownerops-ai/ownerops
+https://github.com/connectos-ai/ownerops
 ```
 
 Repository description:
@@ -24,8 +24,8 @@ Open-source owner-operator triage Slack-native task system.
 - Local repository has no configured remote.
 - GitHub CLI `gh` is installed in the local verification environment as of 2026-07-22.
 - `gh auth status` reports no logged-in GitHub hosts.
-- Unauthenticated `git ls-remote https://github.com/ownerops-ai/ownerops.git` could not inspect the repository.
-- Treat the target repository as "not authenticated-inspected" until a GitHub account with `ownerops-ai` permissions verifies whether the repository exists, is private, or can be created.
+- Unauthenticated `git ls-remote https://github.com/connectos-ai/ownerops.git` could not inspect the repository.
+- Treat the target repository as "not authenticated-inspected" until a GitHub account with `connectos-ai` permissions verifies whether the repository exists, is private, or can be created.
 
 ## Source Documents
 
@@ -67,7 +67,7 @@ Expected local state:
 
 If using the GitHub web UI:
 
-1. Owner: `ownerops-ai`.
+1. Owner: `connectos-ai`.
 2. Repository name: `ownerops`.
 3. Visibility: Public.
 4. Description: `Open-source owner-operator triage Slack-native task system.`
@@ -93,7 +93,7 @@ gh auth login
 Then create the repository only after local gates pass and the target repository is confirmed absent or empty:
 
 ```bash
-gh repo create ownerops-ai/ownerops \
+gh repo create connectos-ai/ownerops \
   --public \
   --description "Open-source owner-operator triage Slack-native task system." \
   --source . \
@@ -110,8 +110,8 @@ Do not push until it is inspected.
 Inspect:
 
 ```bash
-gh repo view ownerops-ai/ownerops --json nameWithOwner,visibility,description,defaultBranchRef,isEmpty,pushedAt,url
-git ls-remote https://github.com/ownerops-ai/ownerops.git
+gh repo view connectos-ai/ownerops --json nameWithOwner,visibility,description,defaultBranchRef,isEmpty,pushedAt,url
+git ls-remote https://github.com/connectos-ai/ownerops.git
 ```
 
 Proceed only if:
@@ -128,7 +128,7 @@ If any existing history is present, stop and decide whether to merge, replace wi
 If the repository is empty and local gates pass:
 
 ```bash
-git remote add origin https://github.com/ownerops-ai/ownerops.git
+git remote add origin https://github.com/connectos-ai/ownerops.git
 git push -u origin main
 ```
 
@@ -139,8 +139,8 @@ Never use force push for first publication.
 After first push:
 
 ```bash
-gh run list --repo ownerops-ai/ownerops --branch main --limit 5
-gh run view --repo ownerops-ai/ownerops --log
+gh run list --repo connectos-ai/ownerops --branch main --limit 5
+gh run view --repo connectos-ai/ownerops --log
 ```
 
 Required evidence:
@@ -159,7 +159,7 @@ Create a branch protection rule for `main` after the first successful push and C
 
 Recommended settings:
 
-- Create or verify generic GitHub team `ownerops-ai/maintainers` before requiring CODEOWNERS reviews.
+- Create or verify generic GitHub team `connectos-ai/maintainers` before requiring CODEOWNERS reviews.
 
 - Require a pull request before merging.
 - Require status checks before merging.

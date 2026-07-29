@@ -89,7 +89,7 @@ The local release candidate is not public-release complete. These items require
 authenticated GitHub access or post-push evidence:
 
 - GitHub CLI authentication or authenticated GitHub web session.
-- Authenticated inspection or safe creation of `ownerops-ai/ownerops`.
+- Authenticated inspection or safe creation of `connectos-ai/ownerops`.
 - Intentional remote addition after inspection.
 - First non-force push to `main`.
 - GitHub-hosted CI pass evidence.

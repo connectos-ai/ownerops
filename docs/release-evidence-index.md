@@ -17,7 +17,7 @@ security audit pass.
   `accc62c1e7f04ae12ed6cf5b3a469dfe04e93024`.
 - Current release-prep status: `docs/security/public-release-security-audit.md`
   remains `FAIL`.
-- Target repository: `https://github.com/ownerops-ai/ownerops`.
+- Target repository: `https://github.com/connectos-ai/ownerops`.
 - Target description: `Open-source owner-operator triage Slack-native task system.`
 
 ## Product Evidence
@@ -82,7 +82,7 @@ These gates require authenticated GitHub access and must not be marked complete
 from local-only evidence:
 
 - GitHub CLI authentication or equivalent GitHub web session.
-- `ownerops-ai/ownerops` exists or can be created.
+- `connectos-ai/ownerops` exists or can be created.
 - Remote is empty or inspected.
 - No force push is needed.
 - Repository description is set.

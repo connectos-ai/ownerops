@@ -21,7 +21,7 @@ workflow, email-to-task conversion, operating briefs, and public integrations.
 ## Before Public Launch
 
 - Authenticate GitHub CLI or use authenticated GitHub web session.
-- Inspect or create `ownerops-ai/ownerops`.
+- Inspect or create `connectos-ai/ownerops`.
 - Push `main` without force only after final gates pass.
 - Capture GitHub-hosted CI evidence.
 - Record branch protection settings.

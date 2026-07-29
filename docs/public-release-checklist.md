@@ -64,7 +64,7 @@ OwnerOps may not be published until every item is complete.
 ## GitHub
 
 - [ ] GitHub CLI authenticated or GitHub web session available.
-- [ ] `ownerops-ai/ownerops` exists or can be created.
+- [ ] `connectos-ai/ownerops` exists or can be created.
 - [ ] Remote is empty or inspected.
 - [ ] Remote added intentionally after inspection.
 - [ ] No force push needed.
