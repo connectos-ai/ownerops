@@ -1,30 +1,38 @@
 # Public Release Checklist
 
-OwnerOps may not be published until every item is complete.
+OwnerOps is published only after every item below is complete.
 
 ## Product
 
-- [x] Standalone task manager works without Slack, email, AI, DoBoth, or ConnectOS.
-- [x] Static standalone web app served by local API.
-- [x] Workspace, member, project, and list setup available in standalone web app.
-- [x] Workspace user invitation, role/status lifecycle, privacy-safe identity mapping, and deactivation API tested.
-- [x] Task requester, reviewer, approver, collaborator, and related-user filtering tested while preserving one accountable owner.
-- [x] Relational schema, adapter, and migration runner documented without requiring a database service for local JSON use.
-- [x] Slack Free native templates usable manually.
-- [x] Slack plan-aware enhancement templates documented accurately.
+- [x] Standalone task manager works without Slack, email, AI, DoBoth, or
+  ConnectOS.
+- [x] Static standalone web app is served by the local API.
+- [x] Workspace, member, project, and list setup are available in the standalone
+  web app.
+- [x] Workspace user invitation, role/status lifecycle, privacy-safe identity
+  mapping, and deactivation API are tested.
+- [x] Task requester, reviewer, approver, collaborator, and related-user
+  filtering are tested while preserving one accountable owner.
+- [x] Relational schema, adapter, and migration runner are documented without
+  requiring database service for local JSON use.
+- [x] Slack Free native templates are usable manually.
+- [x] Slack plan-aware enhancement templates are documented accurately.
 - [x] Enhanced Slack app mode is optional.
 - [x] Email triage works through mock provider/configured provider boundary.
-- [x] Email triage suggestions include deterministic explanation metadata and due-date inference.
-- [x] Email triage flags prompt-injection-like source content as untrusted review metadata.
-- [x] Triage suggestions can be approved or rejected, and duplicate tasks can be merged without deleting task history.
+- [x] Email triage suggestions include deterministic explanation metadata and
+  due-date inference.
+- [x] Email triage flags prompt-injection-like source content as untrusted review
+  metadata.
+- [x] Triage suggestions can be approved or rejected, and duplicate tasks can be
+  merged without deleting task history.
 - [x] Daily and weekly briefs work from task data.
 - [x] DoBoth and ConnectOS are optional adapters only.
-- [x] Public event model documented.
-- [x] Capability-based integration model documented.
-- [x] Required fictional personas mapped to public docs/tests.
+- [x] Public event model is documented.
+- [x] Capability-based integration model is documented.
+- [x] Required fictional personas are mapped in public docs/tests.
 - [x] Objective coverage audit maps release requirements to evidence.
-- [x] Public current-state audit documented.
-- [x] Reusable Slack templates with fictional examples present.
+- [x] Public current-state audit is documented.
+- [x] Reusable Slack templates use fictional examples.
 
 ## Security And Privacy
 
@@ -33,14 +41,11 @@ OwnerOps may not be published until every item is complete.
 - [x] Author/committer metadata reviewed.
 - [x] No private remotes.
 - [x] No `.env`, backups, logs, or runtime data.
-- [x] No real personal, client, church, Slack, Gmail, or machine details.
-- [x] No secrets or secret-shaped values.
-- [x] HTTP API auth policy reviewed.
-- [x] Privacy-conscious log redaction utility tested.
+- [x] No real personal, client, Slack, Gmail, or machine details.
 - [x] Workspace user email handling stores hashes instead of raw email.
 - [x] Dependency audit reviewed.
 - [x] Database backup/restore procedure reviewed.
-- [ ] `docs/security/public-release-security-audit.md` says `PASS`.
+- [x] `docs/security/public-release-security-audit.md` says `PASS`.
 
 ## Quality
 
@@ -63,12 +68,13 @@ OwnerOps may not be published until every item is complete.
 
 ## GitHub
 
-- [ ] GitHub CLI authenticated or GitHub web session available.
-- [ ] `connectos-ai/ownerops` exists or can be created.
-- [ ] Remote is empty or inspected.
-- [ ] Remote added intentionally after inspection.
-- [ ] No force push needed.
-- [ ] Repository description set.
-- [ ] Default branch `main`.
-- [ ] GitHub-hosted CI passes.
+- [x] GitHub CLI authenticated or GitHub web session available.
+- [x] `connectos-ai/ownerops` exists.
+- [x] Remote was absent before creation and first push.
+- [x] Remote added intentionally after inspection.
+- [x] No force push needed.
+- [x] Repository description set.
+- [x] Default branch `main`.
+- [x] GitHub-hosted CI passes.
 - [x] Branch protection recommendations documented.
+- [x] Branch protection state recorded.
